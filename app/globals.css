@@ -1,0 +1,512 @@
+@import "tailwindcss";
+
+/* =========================================
+   PAYROLLX - GLOBAL SETTINGS
+========================================= */
+
+:root {
+  --background: #04122b;
+  --foreground: #f4f7ff;
+  --blue: #168bff;
+  --cyan: #18cfff;
+  --violet: #7950ff;
+  --field-bg: rgba(8, 26, 56, 0.85);
+  --field-border: #25497d;
+}
+
+* { box-sizing: border-box; }
+
+html { min-height: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.6; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; margin: 0; padding: 0; }
+
+/* Preserve scrolling while hiding the browser scrollbar. */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================
+   LOGIN PAGE LAYOUT
+========================================= */
+
+.login-page {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(24, 190, 220, 0.28), transparent 35%),
+    radial-gradient(ellipse at 90% 40%, rgba(40, 70, 200, 0.2), transparent 50%),
+    linear-gradient(135deg, #040f26, #061936 60%, #0a2150);
+}
+
+/* ---------- LEFT PANEL ---------- */
+
+.brand-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 48px 9% 36px;
+  overflow: hidden;
+}
+
+/* Campus photo, faded into the navy background */
+.brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  background:
+    linear-gradient(rgba(8, 28, 70, 0.28), rgba(8, 28, 70, 0.28)),
+    url("/images/amrita-campus.jpg") center bottom / cover no-repeat;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 40%),
+    linear-gradient(to right, #000 55%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 40%),
+    linear-gradient(to right, #000 55%, transparent 100%);
+  mask-composite: intersect;
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Dark gradient so the text stays readable */
+.brand-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(4, 15, 38, 0) 0%,
+    rgba(4, 15, 38, 0) 70%,
+    rgba(4, 15, 38, 0.4) 100%
+  );
+  pointer-events: none;
+}
+
+.brand-top, .brand-content, .brand-footer { position: relative; z-index: 1; }
+
+.brand-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.amrita-logo {
+  display: block;
+  width: clamp(240px, 22vw, 340px);
+  height: auto;
+  margin-bottom: 6px;
+}
+
+.institute-name {
+  margin: 0;
+  color: #dfe8fb;
+  font-size: clamp(14px, 1.2vw, 19px);
+}
+
+.brand-content { margin-top: clamp(24px, 5vh, 52px); }
+
+.wordmark {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(52px, 6.4vw, 100px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.wordmark span {
+  background: linear-gradient(135deg, #18cfff, #7950ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin: 16px 0 0;
+  color: #e6eeff;
+  font-size: clamp(14px, 1.3vw, 20px);
+}
+
+.accent-line {
+  width: 68px;
+  height: 4px;
+  margin: 18px 0 30px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #12d4f7, #7957ff);
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  max-width: 660px;
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #dce8ff;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+
+.feature-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: rgba(35, 90, 200, 0.55);
+  color: #a9d8ff;
+}
+
+.brand-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  text-align: left;
+  color: #d3dff5;
+  font-size: 12px;
+  letter-spacing: 3px;
+}
+
+.brand-footer p { margin: 0 0 12px; }
+
+.footer-motto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 430px;
+  color: #aebfdd;
+  font-size: 10.5px;
+  letter-spacing: 3px;
+}
+
+.footer-motto i {
+  flex: 1;
+  height: 1px;
+  background: rgba(220, 232, 255, 0.5);
+}
+
+/* ---------- RIGHT PANEL ---------- */
+
+.form-panel {
+  display: grid;
+  place-items: center;
+  padding: 40px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 36px 52px 34px;
+  border: 1px solid rgba(40, 110, 230, 0.55);
+  border-radius: 28px;
+  background: rgba(4, 16, 40, 0.8);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.secure-label {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  color: #c5d6f5;
+  font-size: 13px;
+}
+
+/* ---------- Product brand ---------- */
+
+.product-brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 8px 0 38px;
+}
+
+.px-mark { flex-shrink: 0; width: 70px; height: 88px; }
+
+.product-brand h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(34px, 3.4vw, 50px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.product-brand h2 span { color: #2f8bff; }
+
+.product-brand p { margin: 6px 0 4px; color: #a8c7f0; font-size: 17px; }
+
+.product-brand small { display: block; color: #e3ebfa; font-size: 14px; }
+
+/* ---------- Welcome ---------- */
+
+.welcome-section { margin-bottom: 26px; }
+
+.welcome-section h1 {
+  margin: 0 0 6px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #f5f8ff;
+}
+
+.welcome-section p { margin: 0; color: #a4b9d9; font-size: 17px; }
+
+/* ---------- Fields ---------- */
+
+.form-group { margin-bottom: 22px; }
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  color: #eaf0ff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 58px;
+  padding: 0 18px;
+  border: 1px solid var(--field-border);
+  border-radius: 12px;
+  background: var(--field-bg);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-wrapper:hover { border-color: #3a6fb3; }
+
+.input-wrapper:focus-within {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(24, 207, 255, 0.14);
+}
+
+.input-icon { flex-shrink: 0; color: #9db6dc; }
+
+.input-wrapper input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.input-wrapper input::placeholder { color: #8ba2c6; opacity: 1; }
+
+/* stop browsers painting autofill white */
+.input-wrapper input:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.password-toggle {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #9db6dc;
+}
+
+.password-toggle:hover { color: #ffffff; }
+
+/* ---------- Remember / forgot ---------- */
+
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 28px;
+}
+
+.remember {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #eaf0ff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.remember input {
+  position: absolute;
+  opacity: 0;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkbox-box {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #3a6fb3;
+  border-radius: 5px;
+  background: transparent;
+  color: transparent;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.remember input:checked + .checkbox-box {
+  border-color: #1a8dff;
+  background: #1a8dff;
+  color: #ffffff;
+}
+
+.remember input:focus-visible + .checkbox-box {
+  outline: 2px solid #79e6ff;
+  outline-offset: 2px;
+}
+
+.forgot-button {
+  border: 0;
+  background: transparent;
+  color: #2ea8ff;
+  font-size: 15px;
+}
+
+.forgot-button:hover { color: #a0eaff; text-decoration: underline; }
+
+/* ---------- Login button ---------- */
+
+.login-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 64px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #1a7dff, #7a55ff);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 0 10px 28px rgba(62, 96, 255, 0.28);
+  transition: filter 0.2s, transform 0.2s;
+}
+
+.login-button:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.login-button:active { transform: translateY(0); }
+.login-button:focus-visible { outline: 2px solid #79e6ff; outline-offset: 4px; }
+
+.login-message {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(59, 190, 255, 0.3);
+  border-radius: 9px;
+  background: rgba(30, 128, 255, 0.1);
+  color: #bfeaff;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ---------- Security footer ---------- */
+
+.security-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid #1d365b;
+  color: #75cfff;
+}
+
+.security-footer p { margin: 0 0 4px; color: #c6d5ee; font-size: 12.5px; }
+.security-footer span { display: block; color: #9bb0d1; font-size: 12px; }
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (min-width: 801px) and (max-height: 860px) {
+  .brand-panel { padding-top: 32px; padding-bottom: 24px; }
+  .amrita-logo { width: clamp(190px, 16vw, 260px); }
+  .institute-name { font-size: 14px; }
+  .brand-content { margin-top: 20px; }
+  .wordmark { font-size: clamp(44px, 9.5vh, 82px); }
+  .tagline { margin-top: 10px; font-size: 16px; }
+  .accent-line { margin: 12px 0 20px; }
+  .feature-icon { width: 44px; height: 44px; margin-bottom: 6px; }
+  .feature { font-size: 12px; }
+  .login-card { padding: 26px 40px 24px; }
+  .product-brand { margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .input-wrapper { height: 52px; }
+  .login-button { height: 56px; }
+  .security-footer { margin-top: 20px; padding-top: 16px; }
+}
+
+@media (max-width: 1100px) {
+  .login-page { grid-template-columns: 1fr 1fr; }
+  .brand-panel { padding: 40px 6% 32px; }
+  .feature-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
+  .login-card { padding: 30px 30px; }
+}
+
+@media (max-width: 800px) {
+  .login-page { grid-template-columns: 1fr; }
+
+  .brand-panel { min-height: auto; padding: 30px 7% 36px; gap: 28px; }
+  .brand-panel::before { height: 100%; opacity: 0.35; }
+  .brand-footer { display: none; }
+  .feature-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .feature { font-size: 10px; }
+  .feature-icon { width: 42px; height: 42px; }
+  .feature-icon svg { width: 20px; height: 20px; }
+
+  .form-panel { padding: 24px 16px 40px; }
+  .login-card { padding: 26px 22px; border-radius: 22px; }
+  .product-brand h2 { font-size: 32px; }
+  .px-mark { width: 52px; height: 66px; }
+}
+
+@media (max-width: 420px) {
+  .feature-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 16px; }
+  .form-options { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}

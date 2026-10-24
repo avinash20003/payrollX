@@ -15,6 +15,8 @@ import {
   Sparkles,
   ShieldCheck,
   UserPlus,
+  ClipboardList,
+  PlusCircle,
 } from "lucide-react";
 
 type User = {
@@ -140,6 +142,7 @@ export default function Sidebar() {
   }, []);
 
   const isAdmin = user?.role === "ADMIN";
+  const isIdStaffSection = isNavigationActive(pathname, "/id-staff");
 
   return (
     <aside className="flex min-h-screen w-64 shrink-0 flex-col border-r border-slate-800/80 bg-[#0b1220] text-white">
@@ -207,13 +210,42 @@ export default function Sidebar() {
 
           <div className="space-y-1">
             {departmentNavigation.map(({ name, href, icon }) => (
-              <NavigationLink
-                key={href}
-                name={name}
-                href={href}
-                icon={icon}
-                pathname={pathname}
-              />
+              <div key={href}>
+                <NavigationLink
+                  name={name}
+                  href={href}
+                  icon={icon}
+                  pathname={pathname}
+                />
+
+                {href === "/id-staff" && isIdStaffSection && (
+                  <div className="ml-8 mt-1 space-y-1 border-l border-slate-700 pl-3">
+                    <Link
+                      href="/id-staff/salary"
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors ${
+                        pathname === "/id-staff/salary"
+                          ? "bg-blue-500/10 font-semibold text-blue-300"
+                          : "text-slate-400 hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      <ClipboardList size={15} />
+                      Saved Salary Records
+                    </Link>
+
+                    <Link
+                      href="/id-staff/salary/new"
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors ${
+                        pathname === "/id-staff/salary/new"
+                          ? "bg-blue-500/10 font-semibold text-blue-300"
+                          : "text-slate-400 hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      <PlusCircle size={15} />
+                      Add This Month&apos;s Salary
+                    </Link>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

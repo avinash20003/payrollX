@@ -110,49 +110,49 @@ export default function Header() {
     : "Loading...";
 
   return (
-    <header className="sticky top-0 z-30 flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-[76px] shrink-0 items-center justify-between border-b border-slate-800 bg-[#0d1526]/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
           <span>PayrollX</span>
           <ChevronRight size={13} />
-          <span className="truncate text-blue-600">{title}</span>
+          <span className="truncate text-blue-400">{title}</span>
         </div>
 
-        <h2 className="mt-1 truncate text-lg font-bold tracking-tight text-slate-800 sm:text-xl">
+        <h2 className="mt-1 truncate text-lg font-bold tracking-tight text-slate-100 sm:text-xl">
           {title}
         </h2>
       </div>
 
       <div className="ml-4 flex shrink-0 items-center gap-3 sm:gap-5">
         <div className="hidden text-right md:block">
-          <p className="text-xs font-medium text-slate-500">
+          <p className="text-xs font-medium text-slate-400">
             Payroll and employee management
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] text-slate-500">
             Manage your workforce
           </p>
         </div>
 
-        <div className="hidden h-9 w-px bg-slate-200 md:block" />
+        <div className="hidden h-9 w-px bg-slate-800 md:block" />
 
         <button
           type="button"
           aria-label="Notifications"
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-[#111c33] text-slate-400 transition hover:border-blue-500/60 hover:bg-blue-500/10 hover:text-blue-300"
         >
           <Bell size={19} />
         </button>
 
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:gap-3 sm:pl-5">
+        <div className="flex items-center gap-2 border-l border-slate-800 pl-3 sm:gap-3 sm:pl-5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md shadow-blue-900/10">
             <CircleUserRound size={23} />
           </div>
 
           <div className="hidden min-w-0 sm:block">
-            <p className="max-w-36 truncate text-sm font-semibold text-slate-800">
+            <p className="max-w-36 truncate text-sm font-semibold text-slate-100">
               {user?.username ?? "Loading..."}
             </p>
-            <p className="mt-0.5 max-w-36 truncate text-xs text-slate-500">
+            <p className="mt-0.5 max-w-36 truncate text-xs text-slate-400">
               {roleLabel}
             </p>
           </div>
@@ -163,7 +163,7 @@ export default function Header() {
             disabled={loggingOut}
             title="Logout"
             aria-label="Logout"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-[#111c33] text-slate-400 transition hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <LogOut size={18} />
           </button>

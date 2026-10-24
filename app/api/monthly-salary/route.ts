@@ -49,6 +49,10 @@ function isValidMonth(value: unknown): value is string {
   );
 }
 
+function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 // GET: Retrieve monthly salary entries accessible to the user.
 export async function GET(request: Request) {
   try {
@@ -155,10 +159,6 @@ export async function POST(request: Request) {
       sunday_no_days,
       ot_hours,
       night_duties,
-      basic_pay,
-      sunday_amount,
-      ot_amount,
-      night_amount,
       other_amount,
       food_cutting,
       part_payment,
@@ -185,10 +185,6 @@ export async function POST(request: Request) {
       sunday_no_days,
       ot_hours,
       night_duties,
-      basic_pay,
-      sunday_amount,
-      ot_amount,
-      night_amount,
       other_amount,
       food_cutting,
       part_payment,
@@ -271,7 +267,7 @@ export async function POST(request: Request) {
     // to a department the current user can access.
     const employeeResult = await pool.query(
       `
-        SELECT id, department
+        SELECT id, department, basic_salary, ot_rate, night_rate
         FROM public.employees
         WHERE id = $1
           AND is_active = TRUE
@@ -299,18 +295,21 @@ export async function POST(request: Request) {
       return forbiddenResponse();
     }
 
-    const totalSalary =
-      basic_pay +
-      sunday_amount +
-      night_amount +
-      ot_amount +
-      other_amount;
+    const dailyBasic = Number(employee.basic_salary) / daysInMonth;
+    const basicPay = roundMoney(dailyBasic * attendance_days);
+    const sundayAmount = roundMoney(dailyBasic * sunday_no_days * 0.75);
+    const nightAmount = roundMoney(night_duties * Number(employee.night_rate));
+    const otAmount = roundMoney(ot_hours * Number(employee.ot_rate));
+    const totalSalary = roundMoney(
+      basicPay + sundayAmount + nightAmount + otAmount + other_amount
+    );
 
-    const netDue =
+    const netDue = roundMoney(
       totalSalary -
       food_cutting -
       part_payment -
-      deduction;
+      deduction
+    );
 
     const result = await pool.query(
       `
@@ -364,10 +363,10 @@ export async function POST(request: Request) {
         sunday_no_days,
         ot_hours,
         night_duties,
-        basic_pay.toFixed(2),
-        sunday_amount.toFixed(2),
-        ot_amount.toFixed(2),
-        night_amount.toFixed(2),
+        basicPay.toFixed(2),
+        sundayAmount.toFixed(2),
+        otAmount.toFixed(2),
+        nightAmount.toFixed(2),
         other_amount.toFixed(2),
         food_cutting.toFixed(2),
         part_payment.toFixed(2),

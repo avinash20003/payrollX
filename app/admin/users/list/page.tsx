@@ -15,6 +15,7 @@ import {
   AlertCircle,
   LoaderCircle,
   ChevronLeft,
+  ChevronDown,
   CalendarDays,
   Filter,
   Power,
@@ -173,40 +174,24 @@ export default function UserManagementPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#080e1a] px-4 py-8 text-slate-100 sm:px-8 sm:py-10">
-      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-600/[0.10] blur-[130px]" />
-      <div className="pointer-events-none absolute -right-32 top-40 h-96 w-96 rounded-full bg-sky-500/[0.07] blur-[130px]" />
+    <div className="relative min-h-full text-[var(--shell-text)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(600px circle at 0% 0%, rgba(37,99,235,0.10), transparent 70%), radial-gradient(500px circle at 100% 20%, rgba(14,165,233,0.07), transparent 70%)",
+        }}
+      />
 
       <div className="relative mx-auto max-w-7xl">
-        <header className="mb-9 flex flex-col gap-5 border-b border-slate-800/80 pb-7 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-950/30">
-              <Users size={23} />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold tracking-tight text-white">
-                  Payroll<span className="text-blue-400">X</span>
-                </span>
-
-                <span className="rounded-md border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-300">
-                  Admin
-                </span>
-              </div>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Workforce management system
-              </p>
-            </div>
-          </div>
-
+        <header className="mb-9 flex flex-col gap-5 border-b border-[var(--shell-border)] pb-7 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => void loadUsers()}
               disabled={loading}
-              className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-[#0d1524] px-4 py-3 text-sm font-medium text-slate-300 transition hover:border-blue-400/40 hover:text-white disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-xl border border-[var(--shell-border)] bg-[var(--shell-surface)] px-4 py-3 text-sm font-medium text-[var(--shell-text)] transition hover:border-blue-400/40 hover:text-[var(--shell-text)] disabled:opacity-50"
             >
               <RefreshCw
                 size={16}
@@ -226,26 +211,26 @@ export default function UserManagementPage() {
           </div>
         </header>
 
-        <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+        <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--shell-accent)]">
           <ShieldCheck size={14} />
           User administration
         </div>
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              User management<span className="text-blue-400">.</span>
+            <h1 className="text-3xl font-semibold tracking-tight text-[var(--shell-text)] sm:text-4xl">
+              User management<span className="text-[var(--shell-accent)]">.</span>
             </h1>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--shell-muted)]">
               View department accounts, monitor account status, and manage
               access from one place.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start rounded-xl border border-slate-800 bg-[#0d1524] px-4 py-3">
+          <div className="flex items-center gap-2 self-start rounded-xl border border-[var(--shell-border)] bg-[var(--shell-surface)] px-4 py-3">
             <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]" />
-            <span className="text-xs text-slate-300">
+            <span className="text-xs text-[var(--shell-text)]">
               Administrator workspace
             </span>
           </div>
@@ -257,8 +242,8 @@ export default function UserManagementPage() {
             aria-live="polite"
             className={`mb-6 flex items-start gap-3 rounded-xl border p-4 text-sm ${
               error
-                ? "border-red-400/20 bg-red-400/[0.06] text-red-300"
-                : "border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-300"
+                ? "border-red-400/20 bg-red-400/[0.06] text-[var(--shell-danger)]"
+                : "border-emerald-400/20 bg-emerald-400/[0.06] text-[var(--shell-success)]"
             }`}
           >
             {error ? (
@@ -276,7 +261,7 @@ export default function UserManagementPage() {
             value={totalUsers}
             description="All registered accounts"
             icon={Users}
-            iconClass="border-blue-400/15 bg-blue-500/10 text-blue-300"
+            iconClass="border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]"
           />
 
           <StatCard
@@ -284,7 +269,7 @@ export default function UserManagementPage() {
             value={activeUsers}
             description="Accounts currently active"
             icon={CheckCircle2}
-            iconClass="border-emerald-400/15 bg-emerald-500/10 text-emerald-300"
+            iconClass="border-emerald-400/15 bg-emerald-500/10 text-[var(--shell-success)]"
           />
 
           <StatCard
@@ -292,7 +277,7 @@ export default function UserManagementPage() {
             value={inactiveUsers}
             description="Accounts currently disabled"
             icon={XCircle}
-            iconClass="border-red-400/15 bg-red-500/10 text-red-300"
+            iconClass="border-red-400/15 bg-red-500/10 text-[var(--shell-danger)]"
           />
 
           <StatCard
@@ -300,22 +285,22 @@ export default function UserManagementPage() {
             value={departmentUsers}
             description="Accounts with the USER role"
             icon={Building2}
-            iconClass="border-sky-400/15 bg-sky-500/10 text-sky-300"
+            iconClass="border-sky-400/15 bg-sky-500/10 text-[var(--shell-accent)]"
           />
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1422]/95 shadow-2xl shadow-black/20">
-          <div className="flex flex-col gap-4 border-b border-slate-800 px-5 py-5 sm:px-7 md:flex-row md:items-center md:justify-between">
+        <section className="overflow-hidden rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] shadow-2xl shadow-black/20">
+          <div className="flex flex-col gap-4 border-b border-[var(--shell-border)] px-5 py-5 sm:px-7 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-blue-300">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]">
                 <Users size={19} />
               </div>
 
               <div>
-                <h2 className="text-sm font-semibold text-white">
+                <h2 className="text-sm font-semibold text-[var(--shell-text)]">
                   Registered users
                 </h2>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[var(--shell-muted)]">
                   {filteredUsers.length} of {totalUsers} accounts displayed
                 </p>
               </div>
@@ -325,7 +310,7 @@ export default function UserManagementPage() {
               <div className="relative min-w-0 sm:w-64">
                 <Search
                   size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                 />
                 <input
                   type="search"
@@ -333,14 +318,14 @@ export default function UserManagementPage() {
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search users..."
                   aria-label="Search users"
-                  className="w-full rounded-xl border border-slate-700/80 bg-[#0b1220] py-3 pl-10 pr-4 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  className="w-full rounded-xl border border-[var(--shell-border)] bg-[var(--shell-field)] py-3 pl-10 pr-4 text-sm text-[var(--shell-text)] outline-none transition placeholder:text-[var(--shell-muted)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                 />
               </div>
 
               <div className="relative">
                 <Filter
                   size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                 />
                 <select
                   value={departmentFilter}
@@ -348,7 +333,7 @@ export default function UserManagementPage() {
                     setDepartmentFilter(event.target.value)
                   }
                   aria-label="Filter by department"
-                  className="w-full appearance-none rounded-xl border border-slate-700/80 bg-[#0b1220] py-3 pl-9 pr-8 text-sm text-slate-300 outline-none transition focus:border-blue-500 sm:w-52"
+                  className="w-full appearance-none rounded-xl border border-[var(--shell-border)] bg-[var(--shell-field)] py-3 pl-9 pr-8  text-sm text-[var(--shell-text)] outline-none transition focus:border-blue-500 sm:w-52"
                 >
                   <option value="ALL">All departments</option>
                   {departments.map((department) => (
@@ -360,33 +345,39 @@ export default function UserManagementPage() {
                 </select>
               </div>
 
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                aria-label="Filter by account status"
-                className="rounded-xl border border-slate-700/80 bg-[#0b1220] px-3 py-3 text-sm text-slate-300 outline-none transition focus:border-blue-500"
-              >
-                <option value="ALL">All statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                  aria-label="Filter by account status"
+                  className="w-full appearance-none rounded-xl border border-[var(--shell-border)] bg-[var(--shell-field)] py-3 pl-3 pr-9 text-sm text-[var(--shell-text)] outline-none transition  focus:border-blue-500 sm:w-40"
+                >
+                  <option value="ALL">All statuses</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
+                />
+              </div>
             </div>
           </div>
 
           {loading ? (
             <div className="flex min-h-64 flex-col items-center justify-center gap-3 px-6 py-12">
-              <LoaderCircle size={30} className="animate-spin text-blue-400" />
-              <p className="text-sm text-slate-400">Loading user accounts...</p>
+              <LoaderCircle size={30} className="animate-spin text-[var(--shell-accent)]" />
+              <p className="text-sm text-[var(--shell-muted)]">Loading user accounts...</p>
             </div>
           ) : error && users.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-red-400/20 bg-red-500/10 text-red-300">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-red-400/20 bg-red-500/10 text-[var(--shell-danger)]">
                 <AlertCircle size={22} />
               </div>
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-semibold text-[var(--shell-text)]">
                 Unable to load users
               </h3>
-              <p className="mt-2 max-w-md text-xs leading-5 text-slate-400">
+              <p className="mt-2 max-w-md text-xs leading-5 text-[var(--shell-muted)]">
                 {message || "Please check your connection and try again."}
               </p>
               <button
@@ -399,13 +390,13 @@ export default function UserManagementPage() {
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--shell-border)] bg-[var(--shell-hover)] text-[var(--shell-muted)]">
                 <Users size={22} />
               </div>
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-semibold text-[var(--shell-text)]">
                 No users found
               </h3>
-              <p className="mt-2 text-xs leading-5 text-slate-400">
+              <p className="mt-2 text-xs leading-5 text-[var(--shell-muted)]">
                 Try changing your search or filter settings.
               </p>
               <button
@@ -415,7 +406,7 @@ export default function UserManagementPage() {
                   setDepartmentFilter("ALL");
                   setStatusFilter("ALL");
                 }}
-                className="mt-4 text-xs font-medium text-blue-300 transition hover:text-blue-200"
+                className="mt-4 text-xs font-medium text-[var(--shell-accent)] transition hover:text-[var(--shell-accent)]"
               >
                 Clear filters
               </button>
@@ -425,45 +416,45 @@ export default function UserManagementPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[850px] text-left">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-[#0a111e]/70">
-                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <tr className="border-b border-[var(--shell-border)] bg-[var(--shell-hover)]">
+                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
                         User
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
                         Department
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
                         Role
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
                         Created
                       </th>
-                      <th className="px-6 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <th className="px-6 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
                         Action
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-800/80">
+                  <tbody className="divide-y divide-[var(--shell-border)]">
                     {filteredUsers.map((user) => (
                       <tr
                         key={user.id}
-                        className="transition hover:bg-blue-500/[0.025]"
+                        className="transition hover:bg-[var(--shell-hover)]"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/15 bg-gradient-to-br from-blue-500/15 to-sky-500/[0.06] text-sm font-semibold text-blue-200">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/15 bg-gradient-to-br from-blue-500/15 to-sky-500/[0.06] text-sm font-semibold text-[var(--shell-accent)]">
                               {user.username.slice(0, 1).toUpperCase()}
                             </div>
 
                             <div>
-                              <p className="text-sm font-medium text-slate-100">
+                              <p className="text-sm font-medium text-[var(--shell-text)]">
                                 {user.username}
                               </p>
-                              <p className="mt-1 text-[11px] text-slate-500">
+                              <p className="mt-1 text-[11px] text-[var(--shell-muted)]">
                                 ID: {user.id}
                               </p>
                             </div>
@@ -471,10 +462,10 @@ export default function UserManagementPage() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <div className="flex items-center gap-2 text-xs text-[var(--shell-text)]">
                             <Building2
                               size={14}
-                              className="shrink-0 text-slate-500"
+                              className="shrink-0 text-[var(--shell-muted)]"
                             />
                             <span>{user.department || "Unassigned"}</span>
                           </div>
@@ -484,8 +475,8 @@ export default function UserManagementPage() {
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold ${
                               user.role === "ADMIN"
-                                ? "border-violet-400/20 bg-violet-500/10 text-violet-300"
-                                : "border-blue-400/15 bg-blue-500/10 text-blue-300"
+                                ? "border-violet-400/20 bg-violet-500/10 text-[var(--shell-violet)]"
+                                : "border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]"
                             }`}
                           >
                             {user.role === "ADMIN" ? (
@@ -501,8 +492,8 @@ export default function UserManagementPage() {
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] font-medium ${
                               user.is_active
-                                ? "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300"
-                                : "border-red-400/20 bg-red-400/[0.07] text-red-300"
+                                ? "border-emerald-400/20 bg-emerald-400/[0.07] text-[var(--shell-success)]"
+                                : "border-red-400/20 bg-red-400/[0.07] text-[var(--shell-danger)]"
                             }`}
                           >
                             <span
@@ -517,10 +508,10 @@ export default function UserManagementPage() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <div className="flex items-center gap-2 text-xs text-[var(--shell-muted)]">
                             <CalendarDays
                               size={14}
-                              className="shrink-0 text-slate-500"
+                              className="shrink-0 text-[var(--shell-muted)]"
                             />
                             {formatDate(user.created_at)}
                           </div>
@@ -535,8 +526,8 @@ export default function UserManagementPage() {
                               aria-label={`${user.is_active ? "Deactivate" : "Activate"} ${user.username}`}
                               className={`inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                 user.is_active
-                                  ? "border-red-400/20 bg-red-500/[0.05] text-red-300 hover:border-red-400/40 hover:bg-red-500/10"
-                                  : "border-emerald-400/20 bg-emerald-500/[0.05] text-emerald-300 hover:border-emerald-400/40 hover:bg-emerald-500/10"
+                                  ? "border-red-400/20 bg-red-500/[0.05] text-[var(--shell-danger)] hover:border-red-400/40 hover:bg-red-500/10"
+                                  : "border-emerald-400/20 bg-emerald-500/[0.05] text-[var(--shell-success)] hover:border-emerald-400/40 hover:bg-emerald-500/10"
                               }`}
                             >
                               {updatingId === user.id ? (
@@ -554,7 +545,7 @@ export default function UserManagementPage() {
                                   : "Activate"}
                             </button>
                           ) : (
-                            <span className="text-[11px] text-slate-600">
+                            <span className="text-[11px] text-[var(--shell-muted)]">
                               Protected
                             </span>
                           )}
@@ -565,7 +556,7 @@ export default function UserManagementPage() {
                 </table>
               </div>
 
-              <div className="flex flex-col gap-2 border-t border-slate-800 px-6 py-4 text-[11px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 border-t border-[var(--shell-border)] px-6 py-4 text-[11px] text-[var(--shell-muted)] sm:flex-row sm:items-center sm:justify-between">
                 <span>
                   Showing {filteredUsers.length} of {totalUsers} accounts
                 </span>
@@ -578,10 +569,10 @@ export default function UserManagementPage() {
           )}
         </section>
 
-        <footer className="mt-8 flex flex-col gap-2 border-t border-slate-800/80 pt-5 text-center text-[11px] text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <footer className="mt-8 flex flex-col gap-2 border-t border-[var(--shell-border)] pt-5 text-center text-[11px] text-[var(--shell-muted)] sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <Link
             href="/admin/users"
-            className="flex items-center justify-center gap-1.5 transition hover:text-blue-300 sm:justify-start"
+            className="flex items-center justify-center gap-1.5 transition hover:text-[var(--shell-accent)] sm:justify-start"
           >
             <ChevronLeft size={14} />
             Back to user creation
@@ -593,7 +584,7 @@ export default function UserManagementPage() {
           </span>
         </footer>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -611,11 +602,11 @@ function StatCard({
   iconClass: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-[#0d1422]/95 p-5 shadow-lg shadow-black/10">
+    <div className="rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] p-5 shadow-lg shadow-black/10">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-slate-400">{label}</p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
+          <p className="text-xs font-medium text-[var(--shell-muted)]">{label}</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shell-text)]">
             {value}
           </p>
         </div>
@@ -627,7 +618,7 @@ function StatCard({
         </div>
       </div>
 
-      <p className="mt-3 text-[11px] text-slate-500">{description}</p>
+      <p className="mt-3 text-[11px] text-[var(--shell-muted)]">{description}</p>
     </div>
   );
 }

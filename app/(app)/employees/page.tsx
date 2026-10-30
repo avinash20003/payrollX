@@ -312,16 +312,16 @@ export default function EmployeesPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+    "w-full rounded-xl border border-[var(--shell-border)] bg-[var(--shell-field)] px-4 py-3 text-sm text-[var(--shell-text)] outline-none transition placeholder:text-[var(--shell-muted)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
-  const labelClass = "mb-2 block text-sm font-medium text-slate-300";
+  const labelClass = "mb-2 block text-sm font-medium text-[var(--shell-text)]";
 
   return (
-    <div className="min-h-screen bg-[#080e1b] px-4 py-6 text-white sm:px-6 lg:px-8">
+    <div className="min-h-full text-[var(--shell-text)]">
       <div className="mx-auto max-w-7xl space-y-7">
         <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-sm text-blue-400">
+            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--shell-accent)]">
               <Users size={17} />
               <span>Employee Management</span>
             </div>
@@ -330,7 +330,7 @@ export default function EmployeesPage() {
               Employees
             </h1>
 
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-[var(--shell-muted)]">
               Manage employee records, departments, and salary details.
             </p>
           </div>
@@ -340,7 +340,7 @@ export default function EmployeesPage() {
               type="button"
               onClick={() => void loadEmployees(true)}
               disabled={refreshing || loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-slate-800 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--shell-border)] bg-[var(--shell-surface)] px-4 py-3 text-sm font-medium text-[var(--shell-text)] transition hover:bg-[var(--shell-hover)] disabled:opacity-50"
             >
               <RefreshCw
                 size={16}
@@ -361,13 +361,13 @@ export default function EmployeesPage() {
         </header>
 
         {message && (
-          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-300">
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-[var(--shell-success)]">
             <CheckCircle2 size={19} className="mt-0.5 shrink-0" />
             <p>{message}</p>
             <button
               type="button"
               onClick={() => setMessage("")}
-              className="ml-auto text-emerald-300/70 hover:text-emerald-200"
+              className="ml-auto text-[var(--shell-success)] opacity-70 hover:opacity-100"
               aria-label="Dismiss message"
             >
               <X size={17} />
@@ -376,13 +376,13 @@ export default function EmployeesPage() {
         )}
 
         {error && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
+          <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-[var(--shell-danger)]">
             <AlertCircle size={19} className="mt-0.5 shrink-0" />
             <p>{error}</p>
             <button
               type="button"
               onClick={() => setError("")}
-              className="ml-auto text-red-300/70 hover:text-red-200"
+              className="ml-auto text-[var(--shell-danger)] opacity-70 hover:opacity-100"
               aria-label="Dismiss error"
             >
               <X size={17} />
@@ -396,21 +396,21 @@ export default function EmployeesPage() {
               label: "Total Employees",
               value: employees.length,
               icon: Users,
-              color: "text-blue-400",
+              color: "text-[var(--shell-accent)]",
               bg: "bg-blue-500/10",
             },
             {
               label: "Active Employees",
               value: activeCount,
               icon: UserCheck,
-              color: "text-emerald-400",
+              color: "text-[var(--shell-success)]",
               bg: "bg-emerald-500/10",
             },
             {
               label: "Inactive Employees",
               value: inactiveCount,
               icon: UserX,
-              color: "text-amber-400",
+              color: "text-[var(--shell-warn)]",
               bg: "bg-amber-500/10",
             },
             {
@@ -418,7 +418,7 @@ export default function EmployeesPage() {
               value: new Set(employees.map((employee) => employee.department))
                 .size,
               icon: Building2,
-              color: "text-violet-400",
+              color: "text-[var(--shell-violet)]",
               bg: "bg-violet-500/10",
             },
           ].map((card) => {
@@ -427,10 +427,10 @@ export default function EmployeesPage() {
             return (
               <div
                 key={card.label}
-                className="rounded-2xl border border-slate-800 bg-[#101827] p-5"
+                className="rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] p-5"
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-slate-400">{card.label}</p>
+                  <p className="text-sm text-[var(--shell-muted)]">{card.label}</p>
                   <div className={`rounded-xl p-2.5 ${card.bg}`}>
                     <Icon size={20} className={card.color} />
                   </div>
@@ -442,12 +442,12 @@ export default function EmployeesPage() {
           })}
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-[#101827]">
-          <div className="border-b border-slate-800 p-5 sm:p-6">
+        <section className="overflow-hidden rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)]">
+          <div className="border-b border-[var(--shell-border)] p-5 sm:p-6">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div>
                 <h2 className="text-lg font-semibold">Employee Directory</h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[var(--shell-muted)]">
                   {filteredEmployees.length} employee
                   {filteredEmployees.length !== 1 ? "s" : ""} found
                 </p>
@@ -457,7 +457,7 @@ export default function EmployeesPage() {
                 <div className="relative sm:col-span-2 lg:w-72">
                   <Search
                     size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                   />
                   <input
                     type="search"
@@ -497,14 +497,14 @@ export default function EmployeesPage() {
           </div>
 
           {loading ? (
-            <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-slate-400">
-              <Loader2 size={30} className="animate-spin text-blue-400" />
+            <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-[var(--shell-muted)]">
+              <Loader2 size={30} className="animate-spin text-[var(--shell-accent)]" />
               <p className="text-sm">Loading employee records...</p>
             </div>
           ) : filteredEmployees.length === 0 ? (
             <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center">
-              <div className="rounded-2xl bg-slate-800/70 p-4">
-                <UserRound size={32} className="text-slate-400" />
+              <div className="rounded-2xl bg-[var(--shell-hover)] p-4">
+                <UserRound size={32} className="text-[var(--shell-muted)]" />
               </div>
 
               <h3 className="mt-4 text-lg font-semibold">
@@ -513,7 +513,7 @@ export default function EmployeesPage() {
                   : "No matching employees"}
               </h3>
 
-              <p className="mt-2 max-w-md text-sm text-slate-400">
+              <p className="mt-2 max-w-md text-sm text-[var(--shell-muted)]">
                 {employees.length === 0
                   ? "Start by adding your first employee record."
                   : "Try changing your search term or filters."}
@@ -523,7 +523,7 @@ export default function EmployeesPage() {
                 <button
                   type="button"
                   onClick={openCreateForm}
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold hover:bg-blue-500"
+                  className="text-white mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold hover:bg-blue-500"
                 >
                   <Plus size={17} />
                   Add First Employee
@@ -533,7 +533,7 @@ export default function EmployeesPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1050px] text-left text-sm">
-                <thead className="border-b border-slate-800 bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400">
+                <thead className="border-b border-[var(--shell-border)] bg-[var(--shell-hover)] text-xs uppercase tracking-wider text-[var(--shell-muted)]">
                   <tr>
                     <th className="px-5 py-4 font-medium">Employee</th>
                     <th className="px-5 py-4 font-medium">Department</th>
@@ -546,15 +546,15 @@ export default function EmployeesPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-[var(--shell-border)]">
                   {filteredEmployees.map((employee) => (
                     <tr
                       key={employee.id}
-                      className="transition hover:bg-slate-800/30"
+                      className="transition hover:bg-[var(--shell-hover)]"
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-sm font-bold text-blue-300">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-sm font-bold text-[var(--shell-accent)]">
                             {employee.employee_name
                               .trim()
                               .slice(0, 2)
@@ -562,42 +562,42 @@ export default function EmployeesPage() {
                           </div>
 
                           <div>
-                            <p className="font-semibold text-white">
+                            <p className="font-semibold text-[var(--shell-text)]">
                               {employee.employee_name}
                             </p>
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-[var(--shell-muted)]">
                               ID: {employee.employee_code}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-5 py-4 text-slate-300">
+                      <td className="px-5 py-4 text-[var(--shell-text)]">
                         {employee.department}
                       </td>
 
-                      <td className="px-5 py-4 text-slate-300">
+                      <td className="px-5 py-4 text-[var(--shell-text)]">
                         <span className="inline-flex items-center gap-2">
                           <CalendarDays
                             size={15}
-                            className="text-slate-500"
+                            className="text-[var(--shell-muted)]"
                           />
                           {formatDate(employee.date_of_joining)}
                         </span>
                       </td>
 
-                      <td className="px-5 py-4 font-medium text-slate-200">
+                      <td className="px-5 py-4 font-medium text-[var(--shell-text)]">
                         <span className="inline-flex items-center gap-1">
                           <IndianRupee size={14} />
                           {Number(employee.basic_salary).toLocaleString("en-IN")}
                         </span>
                       </td>
 
-                      <td className="px-5 py-4 text-slate-300">
+                      <td className="px-5 py-4 text-[var(--shell-text)]">
                         {formatCurrency(employee.ot_rate)}
                       </td>
 
-                      <td className="px-5 py-4 text-slate-300">
+                      <td className="px-5 py-4 text-[var(--shell-text)]">
                         {formatCurrency(employee.night_rate)}
                       </td>
 
@@ -605,8 +605,8 @@ export default function EmployeesPage() {
                         <span
                           className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
                             employee.is_active
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-amber-500/10 text-amber-400"
+                              ? "bg-emerald-500/10 text-[var(--shell-success)]"
+                              : "bg-amber-500/10 text-[var(--shell-warn)]"
                           }`}
                         >
                           <span
@@ -626,7 +626,7 @@ export default function EmployeesPage() {
                             type="button"
                             onClick={() => openEditForm(employee)}
                             title="Edit employee"
-                            className="rounded-lg border border-slate-700 p-2.5 text-slate-300 transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-300"
+                            className="rounded-lg border border-[var(--shell-border)] p-2.5 text-[var(--shell-text)] transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-[var(--shell-accent)]"
                           >
                             <Pencil size={16} />
                           </button>
@@ -640,10 +640,10 @@ export default function EmployeesPage() {
                                 ? "Deactivate employee"
                                 : "Activate employee"
                             }
-                            className={`rounded-lg border border-slate-700 p-2.5 transition disabled:opacity-50 ${
+                            className={`rounded-lg border border-[var(--shell-border)] p-2.5 transition disabled:opacity-50 ${
                               employee.is_active
-                                ? "text-amber-300 hover:bg-amber-500/10"
-                                : "text-emerald-300 hover:bg-emerald-500/10"
+                                ? "text-[var(--shell-warn)] hover:bg-amber-500/10"
+                                : "text-[var(--shell-success)] hover:bg-emerald-500/10"
                             }`}
                           >
                             {changingStatus === employee.id ? (
@@ -661,7 +661,7 @@ export default function EmployeesPage() {
             </div>
           )}
 
-          <div className="border-t border-slate-800 px-5 py-4 text-xs text-slate-500">
+          <div className="border-t border-[var(--shell-border)] px-5 py-4 text-xs text-[var(--shell-muted)]">
             Showing {filteredEmployees.length} of {employees.length} employees
           </div>
         </section>
@@ -674,13 +674,13 @@ export default function EmployeesPage() {
             if (event.target === event.currentTarget) closeForm();
           }}
         >
-          <div className="my-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-700 bg-[#101827] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
+          <div className="my-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--shell-border)] px-6 py-5">
               <div>
                 <h2 className="text-xl font-bold">
                   {editingEmployee ? "Edit Employee" : "Add New Employee"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[var(--shell-muted)]">
                   {editingEmployee
                     ? "Update the employee's details."
                     : "Enter the employee's details below."}
@@ -691,7 +691,7 @@ export default function EmployeesPage() {
                 type="button"
                 onClick={closeForm}
                 disabled={saving}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:opacity-50"
+                className="rounded-lg p-2 text-[var(--shell-muted)] transition hover:bg-[var(--shell-hover)] hover:text-[var(--shell-text)] disabled:opacity-50"
                 aria-label="Close form"
               >
                 <X size={21} />
@@ -830,18 +830,18 @@ export default function EmployeesPage() {
               </div>
 
               {error && (
-                <div className="mx-6 mb-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+                <div className="mx-6 mb-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-[var(--shell-danger)]">
                   <AlertCircle size={17} className="mt-0.5 shrink-0" />
                   <p>{error}</p>
                 </div>
               )}
 
-              <div className="flex flex-col-reverse justify-end gap-3 border-t border-slate-800 bg-slate-900/30 px-6 py-5 sm:flex-row">
+              <div className="flex flex-col-reverse justify-end gap-3 border-t border-[var(--shell-border)] bg-[var(--shell-hover)] px-6 py-5 sm:flex-row">
                 <button
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+                  className="rounded-xl border border-[var(--shell-border)] px-5 py-3 text-sm font-medium text-[var(--shell-text)] transition hover:bg-[var(--shell-hover)] disabled:opacity-50"
                 >
                   Cancel
                 </button>

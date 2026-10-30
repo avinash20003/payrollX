@@ -1,10 +1,7 @@
 "use client";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
 import { FormEvent, useState } from "react";
 import {
   UserPlus,
-  Users,
   Building2,
   LockKeyhole,
   LoaderCircle,
@@ -44,7 +41,7 @@ export default function CreateDepartmentUserPage() {
     confirmPassword.length > 0 && password === confirmPassword;
 
   const inputClass =
-    "w-full rounded-xl border border-slate-700/80 bg-[#0b1220] py-3.5 pl-11 pr-12 text-sm text-slate-100 outline-none transition-all duration-200 placeholder:text-slate-500 hover:border-slate-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+    "w-full rounded-xl border border-[var(--shell-border)] bg-[var(--shell-field)] py-3.5 pl-11 pr-12 text-sm text-[var(--shell-text)] outline-none transition-all duration-200 placeholder:text-[var(--shell-muted)] hover:border-slate-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,83 +87,52 @@ export default function CreateDepartmentUserPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#080e1a] px-4 py-8 text-slate-100 sm:px-8 sm:py-10">
-      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-600/[0.10] blur-[130px]" />
-      <div className="pointer-events-none absolute -right-32 top-40 h-96 w-96 rounded-full bg-sky-500/[0.07] blur-[130px]" />
+    <div className="relative min-h-full text-[var(--shell-text)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(600px circle at 0% 0%, rgba(37,99,235,0.10), transparent 70%), radial-gradient(500px circle at 100% 20%, rgba(14,165,233,0.07), transparent 70%)",
+        }}
+      />
 
-      <div className="relative mx-auto max-w-6xl">
-        <header className="mb-10 flex flex-col gap-5 border-b border-slate-800/80 pb-7 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-950/30">
-              <Users size={23} />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold tracking-tight text-white">
-                  Payroll<span className="text-blue-400">X</span>
-                </span>
-                <span className="rounded-md border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-300">
-                  Admin
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                Workforce management system
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-start rounded-xl border border-slate-800 bg-[#0d1524] px-4 py-2.5 sm:self-auto">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-300">
-              <ShieldCheck size={17} />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-200">
-                Secure administration
-              </p>
-              <p className="mt-0.5 text-[11px] text-slate-400">
-                Protected workspace
-              </p>
-            </div>
-            <span className="ml-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]" />
-          </div>
-        </header>
-
+      <div className="relative mx-auto max-w-7xl">
         <section className="mb-8">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--shell-accent)]">
             <Sparkles size={14} />
             User administration
           </div>
 
-          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Create a new user<span className="text-blue-400">.</span>
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--shell-text)] sm:text-4xl">
+            Create a new user<span className="text-[var(--shell-accent)]">.</span>
           </h1>
 
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--shell-muted)]">
             Create department accounts, assign organizational access, and
             manage credentials from one place.
           </p>
         </section>
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <section className="overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1422]/95 shadow-2xl shadow-black/20">
-            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5 sm:px-8">
+          <section className="overflow-hidden rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-between border-b border-[var(--shell-border)] px-6 py-5 sm:px-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-blue-300">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]">
                   <UserPlus size={19} />
                 </div>
 
                 <div>
-                  <h2 className="text-sm font-semibold text-white">
+                  <h2 className="text-sm font-semibold text-[var(--shell-text)]">
                     Account details
                   </h2>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-[var(--shell-muted)]">
                     Enter the required information below
                   </p>
                 </div>
               </div>
 
-              <span className="rounded-lg border border-slate-700 bg-slate-800/50 px-2.5 py-1 text-[10px] font-medium tracking-wide text-slate-300">
+              <span className="rounded-lg border border-[var(--shell-border)] bg-[var(--shell-hover)] px-2.5 py-1 text-[10px] font-medium tracking-wide text-[var(--shell-text)]">
                 NEW ACCOUNT
               </span>
             </div>
@@ -175,15 +141,15 @@ export default function CreateDepartmentUserPage() {
               <div>
                 <label
                   htmlFor="username"
-                  className="mb-2.5 block text-xs font-semibold tracking-wide text-slate-300"
+                  className="mb-2.5 block text-xs font-semibold tracking-wide text-[var(--shell-text)]"
                 >
-                  Username <span className="text-blue-400">*</span>
+                  Username <span className="text-[var(--shell-accent)]">*</span>
                 </label>
 
                 <div className="relative">
                   <UserRound
                     size={17}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                   />
                   <input
                     id="username"
@@ -200,7 +166,7 @@ export default function CreateDepartmentUserPage() {
                   />
                 </div>
 
-                <p className="mt-2 text-[11px] text-slate-400">
+                <p className="mt-2 text-[11px] text-[var(--shell-muted)]">
                   Letters, numbers, periods, underscores, and hyphens.
                 </p>
               </div>
@@ -208,15 +174,15 @@ export default function CreateDepartmentUserPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-2.5 block text-xs font-semibold tracking-wide text-slate-300"
+                  className="mb-2.5 block text-xs font-semibold tracking-wide text-[var(--shell-text)]"
                 >
-                  Password <span className="text-blue-400">*</span>
+                  Password <span className="text-[var(--shell-accent)]">*</span>
                 </label>
 
                 <div className="relative">
                   <LockKeyhole
                     size={17}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                   />
 
                   <input
@@ -236,13 +202,13 @@ export default function CreateDepartmentUserPage() {
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-blue-300"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)] transition hover:text-[var(--shell-accent)]"
                   >
                     {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
 
-                <p className="mt-2 text-[11px] text-slate-400">
+                <p className="mt-2 text-[11px] text-[var(--shell-muted)]">
                   Use at least 8 characters.
                 </p>
               </div>
@@ -250,15 +216,15 @@ export default function CreateDepartmentUserPage() {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="mb-2.5 block text-xs font-semibold tracking-wide text-slate-300"
+                  className="mb-2.5 block text-xs font-semibold tracking-wide text-[var(--shell-text)]"
                 >
-                  Confirm password <span className="text-blue-400">*</span>
+                  Confirm password <span className="text-[var(--shell-accent)]">*</span>
                 </label>
 
                 <div className="relative">
                   <LockKeyhole
                     size={17}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                   />
 
                   <input
@@ -295,7 +261,7 @@ export default function CreateDepartmentUserPage() {
                         ? "Hide confirm password"
                         : "Show confirm password"
                     }
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-blue-300"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)] transition hover:text-[var(--shell-accent)]"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={17} />
@@ -308,7 +274,7 @@ export default function CreateDepartmentUserPage() {
                 {confirmPassword.length > 0 && (
                   <p
                     className={`mt-2 flex items-center gap-1.5 text-[11px] ${
-                      passwordsMatch ? "text-emerald-400" : "text-red-400"
+                      passwordsMatch ? "text-[var(--shell-success)]" : "text-[var(--shell-danger)]"
                     }`}
                   >
                     {passwordsMatch ? (
@@ -326,15 +292,15 @@ export default function CreateDepartmentUserPage() {
               <div>
                 <label
                   htmlFor="department"
-                  className="mb-2.5 block text-xs font-semibold tracking-wide text-slate-300"
+                  className="mb-2.5 block text-xs font-semibold tracking-wide text-[var(--shell-text)]"
                 >
-                  Department <span className="text-blue-400">*</span>
+                  Department <span className="text-[var(--shell-accent)]">*</span>
                 </label>
 
                 <div className="relative">
                   <Building2
                     size={17}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                   />
 
                   <select
@@ -342,11 +308,11 @@ export default function CreateDepartmentUserPage() {
                     value={department}
                     onChange={(event) => setDepartment(event.target.value)}
                     required
-                    className={`${inputClass} cursor-pointer appearance-none ${
-                      department ? "text-slate-100" : "text-slate-400"
+                    className={`${inputClass} cursor-pointer appearance-none  ${
+                      department ? "text-[var(--shell-text)]" : "text-[var(--shell-muted)]"
                     }`}
                   >
-                    <option value="" disabled className="bg-[#0d1422]">
+                    <option value="" disabled className="bg-[var(--shell-surface)]">
                       Select a department
                     </option>
 
@@ -354,7 +320,7 @@ export default function CreateDepartmentUserPage() {
                       <option
                         key={item}
                         value={item}
-                        className="bg-[#0d1422] text-slate-100"
+                        className="bg-[var(--shell-surface)] text-[var(--shell-text)]"
                       >
                         {item}
                       </option>
@@ -363,16 +329,16 @@ export default function CreateDepartmentUserPage() {
 
                   <ChevronDown
                     size={17}
-                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
                   />
                 </div>
 
                 {department && (
                   <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-400/15 bg-blue-500/[0.06] px-3 py-2.5">
-                    <Building2 size={14} className="text-blue-300" />
-                    <span className="text-xs text-slate-300">
+                    <Building2 size={14} className="text-[var(--shell-accent)]" />
+                    <span className="text-xs text-[var(--shell-text)]">
                       Selected:{" "}
-                      <span className="font-medium text-blue-200">
+                      <span className="font-medium text-[var(--shell-accent)]">
                         {department}
                       </span>
                     </span>
@@ -386,8 +352,8 @@ export default function CreateDepartmentUserPage() {
                   aria-live="polite"
                   className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${
                     success
-                      ? "border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-300"
-                      : "border-red-400/20 bg-red-400/[0.06] text-red-300"
+                      ? "border-emerald-400/20 bg-emerald-400/[0.06] text-[var(--shell-success)]"
+                      : "border-red-400/20 bg-red-400/[0.06] text-[var(--shell-danger)]"
                   }`}
                 >
                   {success ? (
@@ -399,8 +365,8 @@ export default function CreateDepartmentUserPage() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-4 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <p className="flex items-center gap-2 text-[11px] text-slate-400">
+              <div className="flex flex-col gap-4 border-t border-[var(--shell-border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex items-center gap-2 text-[11px] text-[var(--shell-muted)]">
                   <Fingerprint size={15} className="shrink-0" />
                   Credentials are processed securely.
                 </p>
@@ -431,39 +397,39 @@ export default function CreateDepartmentUserPage() {
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-2xl border border-slate-800 bg-[#0d1422]/95 p-5">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-blue-300">
+            <div className="rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] p-5">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]">
                 <ShieldCheck size={19} />
               </div>
 
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-semibold text-[var(--shell-text)]">
                 Access & permissions
               </h3>
 
-              <p className="mt-2 text-xs leading-6 text-slate-400">
+              <p className="mt-2 text-xs leading-6 text-[var(--shell-muted)]">
                 This account is created with the USER role and an assigned
                 department. Actual data access must be enforced by your
                 backend APIs.
               </p>
 
-              <div className="mt-5 space-y-3 border-t border-slate-800 pt-4">
+              <div className="mt-5 space-y-3 border-t border-[var(--shell-border)] pt-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-400">Account role</span>
-                  <span className="rounded-md border border-blue-400/15 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-300">
+                  <span className="text-xs text-[var(--shell-muted)]">Account role</span>
+                  <span className="rounded-md border border-blue-400/15 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-[var(--shell-accent)]">
                     USER
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-400">Department</span>
-                  <span className="max-w-[145px] truncate text-right text-xs text-slate-300">
+                  <span className="text-xs text-[var(--shell-muted)]">Department</span>
+                  <span className="max-w-[145px] truncate text-right text-xs text-[var(--shell-text)]">
                     {department || "Not selected"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-400">Status</span>
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-300">
+                  <span className="text-xs text-[var(--shell-muted)]">Status</span>
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--shell-success)]">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                     Active on creation
                   </span>
@@ -472,33 +438,33 @@ export default function CreateDepartmentUserPage() {
             </div>
 
             <div className="rounded-2xl border border-blue-400/15 bg-gradient-to-br from-blue-500/[0.09] to-sky-500/[0.03] p-5">
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-blue-300">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]">
                 <Sparkles size={17} />
               </div>
 
-              <h3 className="text-sm font-semibold text-slate-200">
+              <h3 className="text-sm font-semibold text-[var(--shell-text)]">
                 Before you create
               </h3>
 
-              <ul className="mt-3 space-y-3 text-xs leading-5 text-slate-400">
+              <ul className="mt-3 space-y-3 text-xs leading-5 text-[var(--shell-muted)]">
                 <li className="flex gap-2.5">
                   <CheckCircle2
                     size={15}
-                    className="mt-0.5 shrink-0 text-blue-300"
+                    className="mt-0.5 shrink-0 text-[var(--shell-accent)]"
                   />
                   Choose the correct department.
                 </li>
                 <li className="flex gap-2.5">
                   <CheckCircle2
                     size={15}
-                    className="mt-0.5 shrink-0 text-blue-300"
+                    className="mt-0.5 shrink-0 text-[var(--shell-accent)]"
                   />
                   Use a unique username.
                 </li>
                 <li className="flex gap-2.5">
                   <CheckCircle2
                     size={15}
-                    className="mt-0.5 shrink-0 text-blue-300"
+                    className="mt-0.5 shrink-0 text-[var(--shell-accent)]"
                   />
                   Make sure both passwords match.
                 </li>
@@ -507,7 +473,7 @@ export default function CreateDepartmentUserPage() {
           </aside>
         </div>
 
-        <footer className="mt-8 flex flex-col gap-2 border-t border-slate-800/80 pt-5 text-center text-[11px] text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <footer className="mt-8 flex flex-col gap-2 border-t border-[var(--shell-border)] pt-5 text-center text-[11px] text-[var(--shell-muted)] sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <span>PayrollX · Workforce administration</span>
           <span className="flex items-center justify-center gap-1.5">
             <ShieldCheck size={13} />
@@ -515,6 +481,6 @@ export default function CreateDepartmentUserPage() {
           </span>
         </footer>
       </div>
-    </main>
+    </div>
   );
 }

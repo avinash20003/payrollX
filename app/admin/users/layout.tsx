@@ -1,22 +1,40 @@
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
+// app/admin/users/layout.tsx
+import type { ReactNode } from "react";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getAuthenticatedUser } from "@/lib/auth";
+import AppShell from "@/components/layout/AppShell";
+
+async function AdminGuard() {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (user.role?.toUpperCase() !== "ADMIN") {
+    redirect("/dashboard");
+  }
+
+  return null;
+}
 
 export default function UsersLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="flex h-dvh overflow-hidden bg-[#080e1a]">
-      <Sidebar />
+    <>
+      <Suspense fallback={null}>
+        <AdminGuard />
+      </Suspense>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Header />
-
-        <main className="hide-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto">
+      <AppShell>
+        <Suspense fallback={<div className="p-6 text-sm">Loading...</div>}>
           {children}
-        </main>
-      </div>
-    </div>
+        </Suspense>
+      </AppShell>
+    </>
   );
 }

@@ -9,6 +9,7 @@ import {
   Download,
   Eye,
   Loader2,
+  Pencil,
   Plus,
   Printer,
   RefreshCw,
@@ -649,7 +650,7 @@ export function SalaryHistory({
           </h1>
 
           <p className="mt-1 text-sm text-[var(--shell-muted)]">
-            Saved monthly payroll records. A saved month is view-only.
+            Saved monthly payroll records. Open a saved month to view or edit it.
           </p>
         </div>
 
@@ -838,7 +839,7 @@ export function SalaryHistory({
                           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold hover:bg-blue-500"
                         >
                           <Eye size={15} />
-                          View
+                          View / Edit
                         </Link>
 
                         {isAdmin && (
@@ -902,6 +903,7 @@ export function SalarySheet({
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -914,19 +916,24 @@ export function SalarySheet({
     }
   }, []);
 
-  const readOnly =
+  // isSaved: every row already exists in the database.
+  // readOnly: saved AND the user has not clicked Edit.
+  const isSaved =
     rows.length > 0 && rows.every((row) => Boolean(row.record));
+  const readOnly = isSaved && !editing;
 
   const load = useCallback(
     async (salaryMonth: string) => {
       if (!salaryMonth || daysInMonth(salaryMonth) === 0) {
         setRows([]);
+        setEditing(false);
         setError("Select a valid salary month.");
         setLoading(false);
         return;
       }
 
       setLoading(true);
+      setEditing(false);
       setMessage("");
       setError("");
 
@@ -1102,6 +1109,8 @@ export function SalarySheet({
       return;
     }
 
+    const wasEditing = isSaved;
+
     setSaving(true);
     setError("");
     setMessage("");
@@ -1111,7 +1120,8 @@ export function SalarySheet({
 
       for (const row of rows) {
         const response = await fetch(api, {
-          method: "POST",
+          // Existing records are updated (PUT); new ones are created (POST).
+          method: row.record ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             employee_id: Number(row.employee.id),
@@ -1131,11 +1141,14 @@ export function SalarySheet({
         await responseData(response);
       }
 
-      setMessage(
-        "Salary records saved. This month is now locked for viewing."
-      );
-
+      // load() resets the message, so reload first and then show the result.
       await load(month);
+
+      setMessage(
+        wasEditing
+          ? "Salary records updated successfully."
+          : "Salary records saved. Click Edit if you need to change them."
+      );
     } catch (saveError) {
       setError(
         saveError instanceof Error
@@ -1258,7 +1271,9 @@ export function SalarySheet({
             {monthLabel(month)}
             {readOnly
               ? " · Saved record — view only"
-              : " · Enter monthly payroll"}
+              : isSaved
+                ? " · Editing saved record"
+                : " · Enter monthly payroll"}
           </p>
         </div>
 
@@ -1315,6 +1330,33 @@ export function SalarySheet({
             Print
           </button>
 
+          {readOnly && (
+            <button
+              type="button"
+              onClick={() => {
+                setMessage("");
+                setError("");
+                setEditing(true);
+              }}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold hover:bg-amber-500 disabled:opacity-50"
+            >
+              <Pencil size={16} />
+              Edit
+            </button>
+          )}
+
+          {editing && (
+            <button
+              type="button"
+              onClick={() => void load(month)}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--shell-border)] px-4 py-2 text-sm font-semibold hover:bg-[var(--shell-hover)] disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          )}
+
           {!readOnly && (
             <button
               type="button"
@@ -1323,7 +1365,7 @@ export function SalarySheet({
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500 disabled:opacity-50"
             >
               <Save size={16} />
-              {saving ? "Saving…" : "Save month"}
+              {saving ? "Saving…" : editing ? "Save changes" : "Save month"}
             </button>
           )}
         </div>
@@ -1331,8 +1373,15 @@ export function SalarySheet({
 
       {readOnly && (
         <p className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-[var(--shell-success)]">
-          This month has already been saved. Its payroll data is locked and
-          can only be viewed.
+          This month has been saved. Click Edit to make changes.
+        </p>
+      )}
+
+      {editing && (
+        <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+          You are editing a saved month. Salary amounts are recalculated using
+          the employee&apos;s current basic salary and rates. Click Save changes
+          to apply, or Cancel to discard.
         </p>
       )}
 

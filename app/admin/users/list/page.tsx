@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -20,6 +20,12 @@ import {
   Filter,
   Power,
   ArrowUpRight,
+  KeyRound,
+  Trash2,
+  LockKeyhole,
+  Eye,
+  EyeOff,
+  X,
 } from "lucide-react";
 
 type ManagedUser = {
@@ -43,11 +49,24 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
+
+  // Change-password modal state
+  const [passwordTarget, setPasswordTarget] = useState<ManagedUser | null>(
+    null
+  );
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [modalError, setModalError] = useState("");
+
+  const busy = updatingId !== null || deletingId !== null;
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -93,7 +112,9 @@ export default function UserManagementPage() {
 
       const matchesDepartment =
         departmentFilter === "ALL" ||
-        user.department === departmentFilter;
+        (departmentFilter === "__UNASSIGNED__"
+          ? !user.department
+          : user.department === departmentFilter);
 
       const matchesStatus =
         statusFilter === "ALL" ||
@@ -159,6 +180,109 @@ export default function UserManagementPage() {
     }
   }
 
+  async function deleteUser(user: ManagedUser) {
+    const confirmed = window.confirm(
+      `Permanently delete "${user.username}"?\n\nThis cannot be undone. If you only want to block access, deactivate the account instead.`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(user.id);
+    setMessage("");
+    setError(false);
+
+    try {
+      const response = await fetch(`/api/users?id=${user.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to delete user.");
+      }
+
+      setUsers((currentUsers) =>
+        currentUsers.filter((currentUser) => currentUser.id !== user.id)
+      );
+
+      setMessage(data.message || "User deleted successfully.");
+    } catch (err) {
+      setError(true);
+      setMessage(
+        err instanceof Error ? err.message : "Unable to delete user."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function openPasswordModal(user: ManagedUser) {
+    setPasswordTarget(user);
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setShowNewPassword(false);
+    setModalError("");
+  }
+
+  function closePasswordModal() {
+    if (savingPassword) return;
+    setPasswordTarget(null);
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setModalError("");
+  }
+
+  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!passwordTarget) return;
+
+    setModalError("");
+
+    if (newPassword.length < 8) {
+      setModalError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setModalError("Passwords do not match.");
+      return;
+    }
+
+    setSavingPassword(true);
+
+    try {
+      const response = await fetch("/api/users", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: passwordTarget.id,
+          password: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setModalError(data.message || "Unable to update password.");
+        return;
+      }
+
+      setPasswordTarget(null);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setError(false);
+      setMessage(data.message || "Password updated successfully.");
+    } catch {
+      setModalError("Unable to connect to the server. Please try again.");
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
   function formatDate(value: string | null) {
     if (!value) return "—";
 
@@ -172,6 +296,9 @@ export default function UserManagementPage() {
       year: "numeric",
     }).format(date);
   }
+
+  const newPasswordsMatch =
+    confirmNewPassword.length > 0 && newPassword === confirmNewPassword;
 
   return (
     <div className="relative min-h-full text-[var(--shell-text)]">
@@ -223,8 +350,8 @@ export default function UserManagementPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--shell-muted)]">
-              View department accounts, monitor account status, and manage
-              access from one place.
+              View department accounts, monitor account status, change
+              passwords, and manage access from one place.
             </p>
           </div>
 
@@ -414,7 +541,7 @@ export default function UserManagementPage() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[850px] text-left">
+                <table className="w-full min-w-[1050px] text-left">
                   <thead>
                     <tr className="border-b border-[var(--shell-border)] bg-[var(--shell-hover)]">
                       <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
@@ -433,7 +560,7 @@ export default function UserManagementPage() {
                         Created
                       </th>
                       <th className="px-6 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell-muted)]">
-                        Action
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -519,31 +646,64 @@ export default function UserManagementPage() {
 
                         <td className="px-6 py-4 text-right">
                           {user.role === "USER" ? (
-                            <button
-                              type="button"
-                              onClick={() => void toggleUserStatus(user)}
-                              disabled={updatingId !== null}
-                              aria-label={`${user.is_active ? "Deactivate" : "Activate"} ${user.username}`}
-                              className={`inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                user.is_active
-                                  ? "border-red-400/20 bg-red-500/[0.05] text-[var(--shell-danger)] hover:border-red-400/40 hover:bg-red-500/10"
-                                  : "border-emerald-400/20 bg-emerald-500/[0.05] text-[var(--shell-success)] hover:border-emerald-400/40 hover:bg-emerald-500/10"
-                              }`}
-                            >
-                              {updatingId === user.id ? (
-                                <LoaderCircle
-                                  size={14}
-                                  className="animate-spin"
-                                />
-                              ) : (
-                                <Power size={14} />
-                              )}
-                              {updatingId === user.id
-                                ? "Updating..."
-                                : user.is_active
-                                  ? "Deactivate"
-                                  : "Activate"}
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openPasswordModal(user)}
+                                disabled={busy}
+                                aria-label={`Change password for ${user.username}`}
+                                className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-400/20 bg-blue-500/[0.05] px-3 py-2 text-xs font-medium text-[var(--shell-accent)] transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <KeyRound size={14} />
+                                Password
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => void toggleUserStatus(user)}
+                                disabled={busy}
+                                aria-label={`${user.is_active ? "Deactivate" : "Activate"} ${user.username}`}
+                                className={`inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                  user.is_active
+                                    ? "border-amber-400/20 bg-amber-500/[0.05] text-amber-400 hover:border-amber-400/40 hover:bg-amber-500/10"
+                                    : "border-emerald-400/20 bg-emerald-500/[0.05] text-[var(--shell-success)] hover:border-emerald-400/40 hover:bg-emerald-500/10"
+                                }`}
+                              >
+                                {updatingId === user.id ? (
+                                  <LoaderCircle
+                                    size={14}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <Power size={14} />
+                                )}
+                                {updatingId === user.id
+                                  ? "Updating..."
+                                  : user.is_active
+                                    ? "Deactivate"
+                                    : "Activate"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => void deleteUser(user)}
+                                disabled={busy}
+                                aria-label={`Delete ${user.username}`}
+                                className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-400/20 bg-red-500/[0.05] px-3 py-2 text-xs font-medium text-[var(--shell-danger)] transition hover:border-red-400/40 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {deletingId === user.id ? (
+                                  <LoaderCircle
+                                    size={14}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <Trash2 size={14} />
+                                )}
+                                {deletingId === user.id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </button>
+                            </div>
                           ) : (
                             <span className="text-[11px] text-[var(--shell-muted)]">
                               Protected
@@ -584,6 +744,171 @@ export default function UserManagementPage() {
           </span>
         </footer>
       </div>
+
+      {/* Change password modal */}
+      {passwordTarget && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="change-password-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={closePasswordModal}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] shadow-2xl shadow-black/40"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--shell-border)] px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-[var(--shell-accent)]">
+                  <KeyRound size={19} />
+                </div>
+                <div>
+                  <h2
+                    id="change-password-title"
+                    className="text-sm font-semibold text-[var(--shell-text)]"
+                  >
+                    Change password
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--shell-muted)]">
+                    Set a new password for{" "}
+                    <span className="font-medium text-[var(--shell-text)]">
+                      {passwordTarget.username}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closePasswordModal}
+                aria-label="Close"
+                className="text-[var(--shell-muted)] transition hover:text-[var(--shell-text)]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-5 p-6">
+              <div>
+                <label
+                  htmlFor="newPassword"
+                  className="mb-2.5 block text-xs font-semibold tracking-wide text-[var(--shell-text)]"
+                >
+                  New password
+                </label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={17}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
+                  />
+                  <input
+                    id="newPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="At least 8 characters"
+                    autoComplete="new-password"
+                    minLength={8}
+                    maxLength={1024}
+                    required
+                    autoFocus
+                    className="w-full rounded-xl border border-[var(--shell-border)] bg-[var(--shell-field)] py-3.5 pl-11 pr-12 text-sm text-[var(--shell-text)] outline-none transition placeholder:text-[var(--shell-muted)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((current) => !current)}
+                    aria-label={
+                      showNewPassword ? "Hide password" : "Show password"
+                    }
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)] transition hover:text-[var(--shell-accent)]"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff size={17} />
+                    ) : (
+                      <Eye size={17} />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirmNewPassword"
+                  className="mb-2.5 block text-xs font-semibold tracking-wide text-[var(--shell-text)]"
+                >
+                  Confirm new password
+                </label>
+                <div className="relative">
+                  <LockKeyhole
+                    size={17}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--shell-muted)]"
+                  />
+                  <input
+                    id="confirmNewPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    value={confirmNewPassword}
+                    onChange={(event) =>
+                      setConfirmNewPassword(event.target.value)
+                    }
+                    placeholder="Re-enter the new password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    maxLength={1024}
+                    required
+                    className={`w-full rounded-xl border bg-[var(--shell-field)] py-3.5 pl-11 pr-4 text-sm text-[var(--shell-text)] outline-none transition placeholder:text-[var(--shell-muted)] focus:ring-4 focus:ring-blue-500/10 ${
+                      confirmNewPassword.length > 0
+                        ? newPasswordsMatch
+                          ? "border-emerald-500/50 focus:border-emerald-500"
+                          : "border-red-500/50 focus:border-red-500"
+                        : "border-[var(--shell-border)] focus:border-blue-500"
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {modalError && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-3 rounded-xl border border-red-400/20 bg-red-400/[0.06] p-3 text-xs text-[var(--shell-danger)]"
+                >
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--shell-border)] pt-5">
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={savingPassword}
+                  className="rounded-xl border border-[var(--shell-border)] px-4 py-2.5 text-sm font-medium text-[var(--shell-text)] transition hover:bg-[var(--shell-hover)] disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingPassword || !newPasswordsMatch}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingPassword ? (
+                    <>
+                      <LoaderCircle size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound size={16} />
+                      Update password
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

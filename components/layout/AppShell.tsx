@@ -1,4 +1,3 @@
-// components/layout/AppShell.tsx
 
 "use client";
 
@@ -8,15 +7,12 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+
 import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
+
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-
-type User = {
-  username: string;
-  role: string;
-};
 
 export default function AppShell({
   children,
@@ -25,45 +21,45 @@ export default function AppShell({
 }) {
   const router = useRouter();
 
-  const [user, setUser] = useState<User | null>(null);
   const [mobile, setMobile] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
-  // Sidebar and header appear for admins once the user is known.
-  // {children} is always rendered in the same place, so the page is never
-  // dropped while the user loads and never remounts when the role arrives.
-  const isAdmin = user?.role?.trim().toUpperCase() === "ADMIN";
-
+  // Load authentication and theme.
   useEffect(() => {
+    let active = true;
+
     try {
       const savedTheme = localStorage.getItem("salary-theme");
+
       if (savedTheme === "light" || savedTheme === "dark") {
         setTheme(savedTheme);
       }
     } catch {}
 
-    let active = true;
-
     async function loadUser() {
       try {
-        const response = await fetch("/api/auth/me", { cache: "no-store" });
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include",
+        });
 
         if (!response.ok) {
-          router.replace("/login");
+          if (active) router.replace("/login");
           return;
         }
 
         const data = await response.json();
-        const currentUser = data?.user as User | undefined;
 
-        if (!currentUser) {
-          router.replace("/login");
+        const currentUser =
+          data?.user ?? data?.data?.user ?? data;
+
+        if (!currentUser || !currentUser.role) {
+          if (active) router.replace("/login");
           return;
         }
-
-        if (active) setUser(currentUser);
       } catch {
-        router.replace("/login");
+        if (active) router.replace("/login");
       }
     }
 
@@ -74,16 +70,20 @@ export default function AppShell({
     };
   }, [router]);
 
+  // Theme switching.
   const toggleTheme = () => {
     setTheme((current) => {
       const next = current === "dark" ? "light" : "dark";
+
       try {
         localStorage.setItem("salary-theme", next);
       } catch {}
+
       return next;
     });
   };
 
+  // Theme variables.
   const themeVariables: CSSProperties =
     theme === "dark"
       ? ({
@@ -120,46 +120,54 @@ export default function AppShell({
   return (
     <div
       data-shell-theme={theme}
-      style={{ ...themeVariables, colorScheme: theme }}
+      style={{
+        ...themeVariables,
+        colorScheme: theme,
+      }}
       className="flex h-dvh min-w-0 overflow-hidden bg-[var(--shell-bg)] text-[var(--shell-text)]"
     >
-      {isAdmin && (
-        <aside className="hidden h-full shrink-0 lg:block">
-          <Sidebar />
-        </aside>
-      )}
+      {/* DESKTOP SIDEBAR - ALL AUTHENTICATED USERS */}
+      <aside className="hidden h-full shrink-0 lg:block">
+        <Sidebar />
+      </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        {isAdmin && (
-          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-[var(--shell-border)] px-4 lg:hidden">
-            <button
-              type="button"
-              onClick={() => setMobile((value) => !value)}
-              aria-label={mobile ? "Close navigation" : "Open navigation"}
-              aria-expanded={mobile}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--shell-hover)]"
-            >
-              {mobile ? <X size={20} /> : <Menu size={20} />}
-            </button>
 
-            <b>
-              Payroll<span className="text-blue-500">X</span>
-            </b>
-          </div>
-        )}
+        {/* MOBILE NAVIGATION HEADER - ALL USERS */}
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-[var(--shell-border)] px-4 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobile((value) => !value)}
+            aria-label={
+              mobile ? "Close navigation" : "Open navigation"
+            }
+            aria-expanded={mobile}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--shell-hover)]"
+          >
+            {mobile ? <X size={20} /> : <Menu size={20} />}
+          </button>
 
-        {isAdmin && (
-          <div className="hidden shrink-0 lg:block">
-            <Header theme={theme} onToggleTheme={toggleTheme} />
-          </div>
-        )}
+          <b>
+            Payroll<span className="text-blue-500">X</span>
+          </b>
+        </div>
 
+        {/* DESKTOP HEADER - ALL AUTHENTICATED USERS */}
+        <div className="hidden shrink-0 lg:block">
+          <Header
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </div>
+
+        {/* MAIN PAGE CONTENT - ALL AUTHENTICATED USERS */}
         <main className="hide-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto bg-[var(--shell-bg)] p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>
 
-      {isAdmin && mobile && (
+      {/* MOBILE SIDEBAR - ALL AUTHENTICATED USERS */}
+      {mobile && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"

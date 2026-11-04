@@ -2,15 +2,18 @@
 
 // app/(app)/dashboard/page.tsx
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
   ArrowDownRight,
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
   ArrowUpRight,
   Building2,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
@@ -64,20 +67,33 @@ type Row = {
 /* ------------------------------ config ------------------------------ */
 
 const DEPARTMENTS = [
-  { name: "Voucher & ID Staff", route: "/id-staff", icon: Users, desc: "Voucher and identity staff", keys: ["idstaff", "voucheridstaff", "voucherandidstaff"], color: "#3b82f6" },
-  { name: "Head Office", route: "/head-office", icon: Building2, desc: "Administrative operations", keys: ["headoffice"], color: "#22d3ee" },
-  { name: "Housekeeping", route: "/housekeeping", icon: Sparkles, desc: "Housekeeping operations", keys: ["housekeeping"], color: "#8b5cf6" },
-  { name: "Laundry & Linen", route: "/laundry", icon: Activity, desc: "Laundry and linen services", keys: ["laundrylinen", "laundryandlinen"], color: "#f59e0b" },
-  { name: "Patient Movement Services", route: "/patient-movement", icon: Users, desc: "Patient movement operations", keys: ["patientmovementservices"], color: "#10b981" },
+  { name: "Voucher & ID Staff", route: "/id-staff", icon: Users, desc: "Voucher and identity staff", keys: ["idstaff", "voucheridstaff", "voucherandidstaff", "voucherid"], color: "#3b82f6" },
+  { name: "Head Office", route: "/head-office", icon: Building2, desc: "Administrative operations", keys: ["headoffice", "ho"], color: "#22d3ee" },
+  { name: "Housekeeping", route: "/housekeeping", icon: Sparkles, desc: "Housekeeping operations", keys: ["housekeeping", "hk"], color: "#8b5cf6" },
+  { name: "Laundry & Linen", route: "/laundry", icon: Activity, desc: "Laundry and linen services", keys: ["laundrylinen", "laundryandlinen", "laundry"], color: "#f59e0b" },
+  { name: "Patient Movement Services", route: "/patient-movement", icon: Users, desc: "Patient movement operations", keys: ["patientmovementservices", "patientmovement", "pms"], color: "#10b981" },
 ];
+
+const UNASSIGNED_COLOR = "#64748b";
+const TABLE_PAGE = 10;
+const PENDING_PAGE = 60;
 
 /* ------------------------------ helpers ------------------------------ */
 
 const normalize = (v?: string | null) => (v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
+// Exact key match first, then a forgiving partial match
+// (e.g. "Laundry", "Patient Movement", "Housekeeping Dept").
 function deptIndex(value?: string | null) {
   const key = normalize(value);
-  return DEPARTMENTS.findIndex((d) => d.keys.includes(key));
+  if (!key) return -1;
+
+  const exact = DEPARTMENTS.findIndex((d) => d.keys.includes(key));
+  if (exact >= 0) return exact;
+
+  return DEPARTMENTS.findIndex((d) =>
+    d.keys.some((k) => k.length >= 4 && (key.includes(k) || (key.length >= 4 && k.includes(key)))),
+  );
 }
 
 const num = (v: unknown) => {
@@ -91,8 +107,13 @@ function currentMonth() {
 }
 
 function shiftMonth(month: string, delta: number) {
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return currentMonth();
+  }
+
   const [y, m] = month.split("-").map(Number);
   const d = new Date(y, m - 1 + delta, 1);
+
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
@@ -134,6 +155,8 @@ const empName = (e?: Employee) => e?.full_name || e?.employee_name || "";
 
 const entryRoute = (idx: number) => (idx < 0 ? "/dashboard" : `${DEPARTMENTS[idx].route}/salary/new`);
 const historyRoute = (idx: number) => (idx < 0 ? "/dashboard" : `${DEPARTMENTS[idx].route}/salary`);
+const deptColor = (idx: number) => (idx < 0 ? UNASSIGNED_COLOR : DEPARTMENTS[idx].color);
+const deptName = (idx: number) => (idx < 0 ? "Unassigned" : DEPARTMENTS[idx].name);
 
 const sum = (rows: Row[], key: keyof Row) => rows.reduce((t, r) => t + (r[key] as number), 0);
 
@@ -166,6 +189,34 @@ function fromMonthly(r: any, emp?: Employee): Row {
 
 const errorMessage = (data: any, fallback: string) => data?.message || data?.error || fallback;
 
+// Loads every page of a list endpoint. Works whether the API paginates
+// (page / limit / per_page) or ignores those params and returns everything.
+async function fetchAll(url: string, keys: string[], failMsg: string) {
+  const seen = new Map<string, any>();
+  const PAGE = 500;
+
+  for (let page = 1; page <= 40; page++) {
+    const sep = url.includes("?") ? "&" : "?";
+    const res = await fetch(`${url}${sep}page=${page}&limit=${PAGE}&per_page=${PAGE}`, { cache: "no-store" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(errorMessage(data, failMsg));
+
+    const list: any[] = Array.isArray(data)
+      ? data
+      : (keys.map((k) => data?.[k]).find(Array.isArray) as any[]) || [];
+
+    const before = seen.size;
+    list.forEach((r, i) => {
+      seen.set(String(r.id ?? `${r.employee_id}|${r.salary_month}|${r.department}|${page}-${i}`), r);
+    });
+
+    // stop when the page is empty or nothing new arrived (API ignores `page`)
+    if (list.length === 0 || seen.size === before) break;
+  }
+
+  return [...seen.values()];
+}
+
 /* ------------------------------ theme classes ------------------------------ */
 
 const card = "rounded-2xl border border-[var(--border)] bg-[var(--card)]";
@@ -184,10 +235,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useState("");
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
-  const [limit, setLimit] = useState(15);
+  const [limit, setLimit] = useState(TABLE_PAGE);
+  const [pSearch, setPSearch] = useState("");
+  const [pDept, setPDept] = useState("all");
+  const [pLimit, setPLimit] = useState(PENDING_PAGE);
 
   const load = useCallback(async (quiet = false) => {
     if (quiet) setRefreshing(true);
@@ -195,24 +249,13 @@ export default function DashboardPage() {
     setError("");
 
     try {
-      const [eRes, mRes] = await Promise.all([
-        fetch("/api/employees", { cache: "no-store" }),
-        fetch("/api/monthly-salary", { cache: "no-store" }),
+      const [emps, salaries] = await Promise.all([
+        fetchAll("/api/employees", ["employees", "data"], "Unable to load employees."),
+        fetchAll("/api/monthly-salary", ["salaries", "records", "data"], "Unable to load salary records."),
       ]);
 
-      const [eData, mData] = await Promise.all([
-        eRes.json().catch(() => ({})),
-        mRes.json().catch(() => ({})),
-      ]);
-
-      if (!eRes.ok) throw new Error(errorMessage(eData, "Unable to load employees."));
-      if (!mRes.ok) throw new Error(errorMessage(mData, "Unable to load salary records."));
-
-      const pick = (d: any, keys: string[]) =>
-        Array.isArray(d) ? d : (keys.map((k) => d?.[k]).find(Array.isArray) as any[]) || [];
-
-      setEmployees(pick(eData, ["employees"]));
-      setMonthlyRaw(pick(mData, ["salaries", "records"]));
+      setEmployees(emps);
+      setMonthlyRaw(salaries);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong while loading the dashboard.");
     } finally {
@@ -222,10 +265,15 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    setMonth(currentMonth());
+  }, []);
+
+  useEffect(() => {
     void load();
   }, [load]);
 
-  useEffect(() => setLimit(15), [month, search, deptFilter]);
+  useEffect(() => setLimit(TABLE_PAGE), [month, search, deptFilter]);
+  useEffect(() => setPLimit(PENDING_PAGE), [month, pSearch, pDept]);
 
   /* ------------------------------ derived data ------------------------------ */
 
@@ -243,13 +291,25 @@ export default function DashboardPage() {
   const monthRows = useMemo(() => allRows.filter((r) => r.month === month), [allRows, month]);
   const prevRows = useMemo(() => allRows.filter((r) => r.month === shiftMonth(month, -1)), [allRows, month]);
 
+  // Every employee id that already has a saved salary for the selected month.
+  const paidIds = useMemo(() => new Set(monthRows.map((r) => r.employeeId)), [monthRows]);
+
+  // Every active employee without a saved salary, including ones whose department matches no card.
+  const pendingAll = useMemo(
+    () =>
+      activeEmployees
+        .filter((e) => !paidIds.has(String(e.id)))
+        .map((e) => ({ e, idx: deptIndex(e.department) })),
+    [activeEmployees, paidIds],
+  );
+
   const deptStats = useMemo(
     () =>
       DEPARTMENTS.map((d, i) => {
         const rows = monthRows.filter((r) => r.deptIdx === i);
         const staff = activeEmployees.filter((e) => deptIndex(e.department) === i);
-        const paid = new Set(rows.map((r) => r.employeeId));
-        const pending = staff.filter((e) => !paid.has(String(e.id)));
+        const pendingCount = pendingAll.filter((p) => p.idx === i).length;
+        const done = Math.max(0, staff.length - pendingCount);
         const gross = sum(rows, "gross");
 
         return {
@@ -257,34 +317,43 @@ export default function DashboardPage() {
           index: i,
           rows,
           staff: staff.length,
-          pending,
+          done,
+          pendingCount,
           gross,
           net: sum(rows, "net"),
           adjustments: sum(rows, "deduction") + sum(rows, "foodCut") + sum(rows, "partPay"),
           average: rows.length ? gross / rows.length : 0,
-          coverage: staff.length ? Math.min(100, (paid.size / staff.length) * 100) : 0,
+          coverage: staff.length ? Math.min(100, (done / staff.length) * 100) : 0,
         };
       }),
-    [monthRows, activeEmployees],
+    [monthRows, activeEmployees, pendingAll],
   );
+
+  // Active employees whose department matches none of the cards.
+  const unassigned = useMemo(() => {
+    const staff = activeEmployees.filter((e) => deptIndex(e.department) < 0).length;
+    const pendingCount = pendingAll.filter((p) => p.idx < 0).length;
+    return { staff, pendingCount, done: Math.max(0, staff - pendingCount) };
+  }, [activeEmployees, pendingAll]);
 
   const totals = useMemo(() => {
     const gross = sum(monthRows, "gross");
     const prevGross = sum(prevRows, "gross");
     const adjustments = sum(monthRows, "deduction") + sum(monthRows, "foodCut") + sum(monthRows, "partPay");
-    const paidCount = new Set(monthRows.map((r) => `${r.deptIdx}|${r.employeeId}`)).size;
-    const pendingCount = deptStats.reduce((t, d) => t + d.pending.length, 0);
+    const pendingCount = pendingAll.length;
+    const submittedCount = Math.max(0, activeEmployees.length - pendingCount);
 
     return {
       gross,
       net: sum(monthRows, "net"),
       adjustments,
-      paidCount,
+      submittedCount,
       pendingCount,
+      submittedPct: activeEmployees.length ? (submittedCount / activeEmployees.length) * 100 : 0,
       change: prevGross > 0 ? ((gross - prevGross) / prevGross) * 100 : null,
       average: monthRows.length ? gross / monthRows.length : 0,
     };
-  }, [monthRows, prevRows, deptStats]);
+  }, [monthRows, prevRows, pendingAll, activeEmployees]);
 
   const breakdown = useMemo(
     () => ({
@@ -305,12 +374,26 @@ export default function DashboardPage() {
   );
 
   const trend = useMemo(() => {
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      return { items: [], max: 1 };
+    }
+
     const items = Array.from({ length: 6 }, (_, i) => {
       const m = shiftMonth(month, i - 5);
       const rows = allRows.filter((r) => r.month === m);
-      return { month: m, gross: sum(rows, "gross"), net: sum(rows, "net"), count: rows.length };
+
+      return {
+        month: m,
+        gross: sum(rows, "gross"),
+        net: sum(rows, "net"),
+        count: rows.length,
+      };
     });
-    return { items, max: Math.max(1, ...items.map((i) => i.gross)) };
+
+    return {
+      items,
+      max: Math.max(1, ...items.map((i) => i.gross)),
+    };
   }, [allRows, month]);
 
   const donut = useMemo(() => {
@@ -326,6 +409,37 @@ export default function DashboardPage() {
     return { R, C, segments };
   }, [deptStats, totals.gross]);
 
+  // Overall submission ring.
+  const ring = useMemo(() => {
+    const R = 52;
+    const C = 2 * Math.PI * R;
+    return { R, C, dash: (Math.min(100, totals.submittedPct) / 100) * C };
+  }, [totals.submittedPct]);
+
+  // Net salary distribution: how many employees fall in each pay band.
+  const distribution = useMemo(() => {
+    const values = monthRows.map((r) => r.net).filter((v) => v > 0);
+    if (values.length === 0) return { buckets: [] as { from: number; to: number; count: number }[], max: 1, avg: 0, median: 0 };
+
+    const BUCKETS = 6;
+    const top = values.reduce((m, v) => Math.max(m, v), 0);
+    const step = Math.max(1000, Math.ceil(top / BUCKETS / 1000) * 1000);
+    const buckets = Array.from({ length: BUCKETS }, (_, i) => ({ from: i * step, to: (i + 1) * step, count: 0 }));
+    values.forEach((v) => {
+      buckets[Math.min(BUCKETS - 1, Math.floor(v / step))].count += 1;
+    });
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const median = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+
+    return {
+      buckets,
+      max: Math.max(1, ...buckets.map((b) => b.count)),
+      avg: values.reduce((t, v) => t + v, 0) / values.length,
+      median,
+    };
+  }, [monthRows]);
+
   const tableRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return monthRows
@@ -337,8 +451,42 @@ export default function DashboardPage() {
       .sort((a, b) => a.deptIdx - b.deptIdx || a.name.localeCompare(b.name));
   }, [monthRows, search, deptFilter]);
 
+  // Pending list: searchable, filterable, scrolls inside its own card.
+  const pendingCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    pendingAll.forEach((p) => counts.set(p.idx, (counts.get(p.idx) || 0) + 1));
+    return counts;
+  }, [pendingAll]);
+
+  const pendingRows = useMemo(() => {
+    const q = pSearch.trim().toLowerCase();
+    return pendingAll
+      .filter(({ e, idx }) => {
+        if (pDept !== "all" && String(idx) !== pDept) return false;
+        if (!q) return true;
+        return [empName(e), e.employee_code, e.department].some((v) => String(v ?? "").toLowerCase().includes(q));
+      })
+      .sort((a, b) => (a.idx < 0 ? 99 : a.idx) - (b.idx < 0 ? 99 : b.idx) || empName(a.e).localeCompare(empName(b.e)));
+  }, [pendingAll, pSearch, pDept]);
+
   const topDept = [...deptStats].sort((a, b) => b.gross - a.gross)[0];
-  const pendingList = deptStats.flatMap((d) => d.pending.map((e) => ({ e, d }))).slice(0, 8);
+
+  // Scroll state for the saved-records list (drives the fade, hint pill and back-to-top button).
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({ top: true, end: false });
+
+  const updateScroll = useCallback(() => {
+    const el = tableRef.current;
+    if (!el) return;
+    setScrollState({
+      top: el.scrollTop < 8,
+      end: el.scrollTop + el.clientHeight >= el.scrollHeight - 8,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateScroll();
+  }, [tableRows, limit, loading, updateScroll]);
 
   function exportCsv() {
     const headers = [
@@ -377,9 +525,9 @@ export default function DashboardPage() {
     },
     { label: "Net payable", value: compact(totals.net), exact: inr(totals.net), note: `${monthRows.length} saved salary records`, trend: 0, icon: Wallet, accent: true },
     {
-      label: "Employees paid",
-      value: String(totals.paidCount),
-      note: `${totals.pendingCount} still pending of ${activeEmployees.length} active`,
+      label: "Salaries submitted",
+      value: `${totals.submittedCount} / ${activeEmployees.length}`,
+      note: `${totals.pendingCount} still pending · ${totals.submittedPct.toFixed(0)}% complete`,
       trend: 0,
       icon: Users,
     },
@@ -391,6 +539,20 @@ export default function DashboardPage() {
       trend: 0,
       icon: Activity,
     },
+  ];
+
+  // Rows for the "submission by department" chart.
+  const statusRows = [
+    ...deptStats.map((d) => ({ key: d.name, name: d.name, color: d.color, staff: d.staff, done: d.done, pending: d.pendingCount })),
+    ...(unassigned.staff > 0
+      ? [{ key: "unassigned", name: "Unassigned", color: UNASSIGNED_COLOR, staff: unassigned.staff, done: unassigned.done, pending: unassigned.pendingCount }]
+      : []),
+  ];
+
+  const pendingChips: { value: string; label: string; count: number; color?: string }[] = [
+    { value: "all", label: "All", count: pendingAll.length },
+    ...DEPARTMENTS.map((d, i) => ({ value: String(i), label: d.name, count: pendingCounts.get(i) || 0, color: d.color })),
+    ...((pendingCounts.get(-1) || 0) > 0 ? [{ value: "-1", label: "Unassigned", count: pendingCounts.get(-1) || 0, color: UNASSIGNED_COLOR }] : []),
   ];
 
   return (
@@ -602,9 +764,9 @@ export default function DashboardPage() {
 
                       <div className="mt-4">
                         <div className="mb-2 flex items-center justify-between text-xs">
-                          <span className="text-[var(--muted)]">Entered {d.rows.length} of {d.staff} employees</span>
-                          <span className={`font-semibold ${d.pending.length ? "text-[var(--warn)]" : "text-[var(--good)]"}`}>
-                            {d.pending.length ? `${d.pending.length} pending` : "Complete"}
+                          <span className="text-[var(--muted)]">Entered {d.done} of {d.staff} employees</span>
+                          <span className={`font-semibold ${d.pendingCount ? "text-[var(--warn)]" : "text-[var(--good)]"}`}>
+                            {d.pendingCount ? `${d.pendingCount} pending` : "Complete"}
                           </span>
                         </div>
                         <div className="h-1.5 overflow-hidden rounded-full bg-[var(--head)]">
@@ -627,13 +789,81 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {/* Share + pending */}
-            <section className="grid gap-5 lg:grid-cols-2">
+            {/* Submission status + share + distribution (fixed-size cards, never grow with headcount) */}
+            <section className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+              {/* Submission status */}
+              <div className={`${card} p-5 sm:p-6`}>
+                <h2 className="text-lg font-bold text-[var(--text)]">Submission status</h2>
+                <p className="mt-1 text-sm text-[var(--muted)]">How many salaries are saved for {formatMonth(month)}.</p>
+
+                <div className="mt-5 flex items-center gap-5">
+                  <div className="relative h-[130px] w-[130px] shrink-0">
+                    <svg viewBox="0 0 130 130" className="h-full w-full" role="img" aria-label="Salary submission progress">
+                      <circle cx="65" cy="65" r={ring.R} fill="none" stroke="var(--head)" strokeWidth="14" />
+                      <circle
+                        cx="65"
+                        cy="65"
+                        r={ring.R}
+                        fill="none"
+                        stroke="var(--accent)"
+                        strokeWidth="14"
+                        strokeLinecap="round"
+                        strokeDasharray={`${ring.dash} ${ring.C - ring.dash}`}
+                        transform="rotate(-90 65 65)"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold tabular-nums text-[var(--text)]">{totals.submittedPct.toFixed(0)}%</span>
+                      <span className="text-[11px] text-[var(--muted)]">submitted</span>
+                    </div>
+                  </div>
+
+                  <div className="grid flex-1 grid-cols-2 gap-2 text-center">
+                    <div className="rounded-xl bg-[var(--head)] p-3">
+                      <p className="text-[11px] text-[var(--muted)]">Submitted</p>
+                      <p className="mt-1 text-xl font-bold tabular-nums text-[var(--good)]">{totals.submittedCount}</p>
+                    </div>
+                    <div className="rounded-xl bg-[var(--head)] p-3">
+                      <p className="text-[11px] text-[var(--muted)]">Pending</p>
+                      <p className="mt-1 text-xl font-bold tabular-nums text-[var(--warn)]">{totals.pendingCount}</p>
+                    </div>
+                    <div className="col-span-2 rounded-xl bg-[var(--head)] p-3">
+                      <p className="text-[11px] text-[var(--muted)]">Active employees</p>
+                      <p className="mt-1 text-xl font-bold tabular-nums text-[var(--text)]">{activeEmployees.length}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3.5">
+                  {statusRows.map((s) => {
+                    const donePct = s.staff ? (s.done / s.staff) * 100 : 0;
+                    return (
+                      <div key={s.key}>
+                        <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                          <span className="flex min-w-0 items-center gap-2 text-[var(--text)]">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: s.color }} />
+                            <span className="truncate font-medium">{s.name}</span>
+                          </span>
+                          <span className="shrink-0 tabular-nums text-[var(--muted)]">
+                            <span className="font-semibold text-[var(--text)]">{s.done}</span> / {s.staff}
+                            {s.pending > 0 && <span className="ml-2 font-semibold text-[var(--warn)]">{s.pending} pending</span>}
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-[var(--head)]">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${donePct}%`, backgroundColor: s.color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Department share */}
               <div className={`${card} p-5 sm:p-6`}>
                 <h2 className="text-lg font-bold text-[var(--text)]">Department share</h2>
                 <p className="mt-1 text-sm text-[var(--muted)]">Share of this month&apos;s gross payroll.</p>
 
-                <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
+                <div className="mt-5 flex flex-col items-center gap-6">
                   <div className="relative h-[170px] w-[170px] shrink-0">
                     <svg viewBox="0 0 160 160" className="h-full w-full" role="img" aria-label="Department share of payroll">
                       <circle cx="80" cy="80" r={donut.R} fill="none" stroke="var(--head)" strokeWidth="18" />
@@ -674,40 +904,152 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className={`${card} p-5 sm:p-6`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-bold text-[var(--text)]">Pending salary entries</h2>
-                    <p className="mt-1 text-sm text-[var(--muted)]">Active employees with no saved salary for {formatMonth(month)}.</p>
-                  </div>
-                  <span className="rounded-full bg-[var(--head)] px-3 py-1 text-sm font-bold text-[var(--warn)]">{totals.pendingCount}</span>
-                </div>
+              {/* Net salary distribution */}
+              <div className={`${card} p-5 sm:p-6 lg:col-span-2 xl:col-span-1`}>
+                <h2 className="text-lg font-bold text-[var(--text)]">Net salary distribution</h2>
+                <p className="mt-1 text-sm text-[var(--muted)]">Number of employees in each net pay band.</p>
 
-                {pendingList.length === 0 ? (
-                  <p className="mt-8 rounded-xl bg-[var(--accent-bg)] p-6 text-center text-sm font-medium text-[var(--accent)]">
-                    Every active employee has a salary entry for this month.
+                {distribution.buckets.length === 0 ? (
+                  <p className="mt-8 rounded-xl bg-[var(--head)] p-6 text-center text-sm text-[var(--muted)]">
+                    Distribution appears once salaries are saved for this month.
                   </p>
                 ) : (
-                  <ul className="mt-4 divide-y divide-[var(--border)]">
-                    {pendingList.map(({ e, d }) => (
-                      <li key={`${d.index}-${e.id}`} className="flex items-center gap-3 py-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold" style={{ backgroundColor: `${d.color}22`, color: d.color }}>
+                  <>
+                    <div className="mt-6 flex h-[200px] items-end gap-2">
+                      {distribution.buckets.map((b) => (
+                        <div
+                          key={b.from}
+                          title={`${inr(b.from)} – ${inr(b.to)} · ${b.count} employees`}
+                          className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
+                        >
+                          <span className="text-[11px] font-semibold tabular-nums text-[var(--text)]">{b.count}</span>
+                          <div
+                            className="w-full rounded-t-md bg-[var(--accent)]"
+                            style={{ height: `${b.count === 0 ? 1 : Math.max(4, (b.count / distribution.max) * 78)}%`, opacity: b.count === 0 ? 0.25 : 1 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      {distribution.buckets.map((b) => (
+                        <span key={b.from} className="min-w-0 flex-1 truncate text-center text-[10px] tabular-nums text-[var(--muted)]">
+                          {compact(b.from)}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-5 grid grid-cols-2 gap-2 text-center">
+                      <div className="rounded-xl bg-[var(--head)] p-3">
+                        <p className="text-[11px] text-[var(--muted)]">Average net</p>
+                        <p className="mt-1 text-sm font-bold tabular-nums text-[var(--text)]">{inr(distribution.avg)}</p>
+                      </div>
+                      <div className="rounded-xl bg-[var(--head)] p-3">
+                        <p className="text-[11px] text-[var(--muted)]">Median net</p>
+                        <p className="mt-1 text-sm font-bold tabular-nums text-[var(--text)]">{inr(distribution.median)}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* Pending salary entries: fixed height, scrolls inside the card, so 10 or 500 people never stretch the page */}
+            <section className={`${card} overflow-hidden`}>
+              <div className="flex flex-col gap-4 border-b border-[var(--border)] p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-bold text-[var(--text)]">Pending salary entries</h2>
+                      <span className="rounded-full bg-[var(--head)] px-3 py-1 text-sm font-bold text-[var(--warn)]">{totals.pendingCount}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                      {totals.submittedCount} of {activeEmployees.length} active employees submitted for {formatMonth(month)}. Scroll or search to see everyone still pending.
+                    </p>
+                  </div>
+
+                  <div className="relative">
+                    <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                    <input
+                      value={pSearch}
+                      onChange={(e) => setPSearch(e.target.value)}
+                      placeholder="Search pending…"
+                      className={`${fieldCls} w-full pl-9 sm:w-64`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {pendingChips.map((c) => {
+                    const active = pDept === c.value;
+                    return (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setPDept(c.value)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          active
+                            ? "border-[var(--accent)] bg-[var(--accent-bg)] text-[var(--accent)]"
+                            : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+                        }`}
+                      >
+                        {c.color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />}
+                        {c.label}
+                        <span className="tabular-nums">{c.count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {pendingRows.length === 0 ? (
+                <p className="m-5 flex items-center justify-center gap-2 rounded-xl bg-[var(--accent-bg)] p-6 text-center text-sm font-medium text-[var(--accent)] sm:m-6">
+                  <CheckCircle2 size={18} />
+                  {pendingAll.length === 0
+                    ? "Every active employee has a salary entry for this month."
+                    : "No pending employees match this search."}
+                </p>
+              ) : (
+                <div className="modern-scroll max-h-[440px] overflow-y-auto p-3 sm:p-4">
+                  <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                    {pendingRows.slice(0, pLimit).map(({ e, idx }) => (
+                      <li
+                        key={`${idx}-${e.id}`}
+                        className="flex items-center gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5 hover:bg-[var(--hover)]"
+                      >
+                        <span
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold"
+                          style={{ backgroundColor: `${deptColor(idx)}22`, color: deptColor(idx) }}
+                        >
                           {(empName(e) || "E").slice(0, 1).toUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold text-[var(--text)]">{empName(e) || `Employee #${e.id}`}</span>
-                          <span className="block truncate text-xs text-[var(--muted)]">{e.employee_code ? `${e.employee_code} · ` : ""}{d.name}</span>
+                          <span className="block truncate text-xs text-[var(--muted)]">
+                            {e.employee_code ? `${e.employee_code} · ` : ""}
+                            {idx < 0 ? e.department || "Unassigned" : deptName(idx)}
+                          </span>
                         </span>
-                        <Link href={`${entryRoute(d.index)}?month=${month}`} className="text-xs font-semibold text-[var(--accent)] hover:underline">
+                        <Link
+                          href={`${entryRoute(idx)}?month=${month}&employee_id=${encodeURIComponent(String(e.id))}`}
+                          className="rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--on-accent)]"
+                        >
                           Enter
                         </Link>
                       </li>
                     ))}
                   </ul>
-                )}
-                {totals.pendingCount > pendingList.length && (
-                  <p className="mt-3 text-xs text-[var(--muted)]">and {totals.pendingCount - pendingList.length} more across departments</p>
-                )}
+
+                  {pLimit < pendingRows.length && (
+                    <div className="mt-3 text-center">
+                      <button type="button" onClick={() => setPLimit((l) => l + PENDING_PAGE)} className="text-xs font-semibold text-[var(--accent)] hover:underline">
+                        Show {Math.min(PENDING_PAGE, pendingRows.length - pLimit)} more
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="border-t border-[var(--border)] px-5 py-3 text-xs text-[var(--muted)]">
+                Showing {Math.min(pLimit, pendingRows.length)} of {pendingRows.length} pending employees
               </div>
             </section>
 
@@ -748,9 +1090,10 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
+                  <div className="relative">
+                  <div ref={tableRef} onScroll={updateScroll} className="modern-scroll max-h-[400px] overflow-auto">
                     <table className="w-full min-w-[920px] text-left text-sm">
-                      <thead className="bg-[var(--head)] text-xs text-[var(--muted)]">
+                      <thead className="sticky top-0 z-10 bg-[var(--head)] text-xs text-[var(--muted)]">
                         <tr>
                           <th className="px-5 py-3.5 font-semibold">Employee</th>
                           <th className="px-5 py-3.5 font-semibold">Department</th>
@@ -763,7 +1106,7 @@ export default function DashboardPage() {
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
                         {tableRows.slice(0, limit).map((r) => {
-                          const color = r.deptIdx >= 0 ? DEPARTMENTS[r.deptIdx].color : "#64748b";
+                          const color = deptColor(r.deptIdx);
                           return (
                             <tr key={`${r.deptIdx}-${r.employeeId}-${r.month}`} className="hover:bg-[var(--hover)]">
                               <td className="px-5 py-4">
@@ -800,7 +1143,7 @@ export default function DashboardPage() {
                           );
                         })}
                       </tbody>
-                      <tfoot className="border-t-2 border-[var(--border)] bg-[var(--head)] text-sm font-bold text-[var(--text)]">
+                      <tfoot className="sticky bottom-0 border-t-2 border-[var(--border)] bg-[var(--head)] text-sm font-bold text-[var(--text)]">
                         <tr>
                           <td className="px-5 py-4" colSpan={3}>Total for filtered records</td>
                           <td className="px-5 py-4 text-right tabular-nums">{inr(sum(tableRows, "gross"))}</td>
@@ -812,6 +1155,30 @@ export default function DashboardPage() {
                         </tr>
                       </tfoot>
                     </table>
+                  </div>
+
+                  {/* fade + hint: more rows below */}
+                  {!scrollState.end && (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-[52px] flex h-16 items-end justify-center bg-gradient-to-t from-[var(--card)] to-transparent pb-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-[11px] font-semibold text-[var(--muted)] shadow-lg">
+                        <ArrowDown size={12} className="animate-bounce" />
+                        Scroll for more
+                      </span>
+                    </div>
+                  )}
+
+                  {/* back to top */}
+                  {!scrollState.top && (
+                    <button
+                      type="button"
+                      onClick={() => tableRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+                      className="absolute bottom-[68px] right-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--on-accent)] shadow-lg hover:opacity-90"
+                      aria-label="Back to top"
+                      title="Back to top"
+                    >
+                      <ArrowUp size={16} />
+                    </button>
+                  )}
                   </div>
 
                   <div className="flex items-center justify-between border-t border-[var(--border)] px-5 py-3 text-xs text-[var(--muted)]">
@@ -879,6 +1246,30 @@ export default function DashboardPage() {
           --warn: #fbbf24;
           --danger: #ff8a80;
           --danger-bg: #2c1618;
+        }
+        .modern-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: var(--accent) transparent;
+          scroll-behavior: smooth;
+          overscroll-behavior: contain;
+        }
+        .modern-scroll::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .modern-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .modern-scroll::-webkit-scrollbar-thumb {
+          background: var(--border);
+          border-radius: 999px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .modern-scroll:hover::-webkit-scrollbar-thumb {
+          background: var(--accent);
+          background-clip: padding-box;
+          border: 2px solid transparent;
         }
         .salary-theme a:focus-visible,
         .salary-theme input:focus-visible,

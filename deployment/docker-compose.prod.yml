@@ -1,0 +1,102 @@
+name: housekeeping-salary
+
+services:
+  db:
+    image: postgres:18.7-alpine3.24
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-housekeeping_salary}
+      POSTGRES_USER: ${POSTGRES_USER:-housekeeping}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    expose: ["5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  migrate:
+    image: postgres:18.7-alpine3.24
+    restart: "no"
+    entrypoint: ["/bin/sh", "/database/migrate.sh"]
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-housekeeping_salary}
+      PGUSER: ${MIGRATOR_DB_USER:-housekeeping_migrator}
+      PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?Set MIGRATOR_DB_PASSWORD}
+      APP_DB_USER: ${APP_DB_USER:-housekeeping_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}
+      BOOTSTRAP_PGUSER: ${POSTGRES_USER:-postgres}
+      BOOTSTRAP_PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - ../database/migrate.sh:/database/migrate.sh:ro
+      - ../database/migrations:/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  admin-create:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE}
+    restart: "no"
+    command: ["node", "scripts/create-admin.mjs"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${APP_DB_USER:-housekeeping_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-housekeeping_salary}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  backend:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3001
+      DATABASE_URL: postgresql://${APP_DB_USER:-housekeeping_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-housekeeping_salary}
+    expose: ["3001"]
+    depends_on:
+      admin-create:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      API_INTERNAL_URL: http://backend:3001
+    expose: ["3000"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  nginx:
+    image: ${NGINX_IMAGE:?Set NGINX_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

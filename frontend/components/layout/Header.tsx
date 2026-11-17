@@ -19,13 +19,13 @@ const TITLES: Record<string, string> = {
   "/employees": "Employee Master",
   "/id-staff": "ID Staff",
   "/head-office": "Head Office",
-  "/housekeeping": "Housekeeping",
+  "/payrollx": "PayrollX",
   "/laundry": "Laundry & Linen",
   "/patient-movement": "Patient Movement",
 };
 
 function getTitle(path: string): string {
-  if (path.startsWith("/housekeeping/salary")) return "Housekeeping Salary";
+  if (path.startsWith("/payrollx/salary")) return "PayrollX Salary";
   if (path.startsWith("/id-staff/salary")) return "ID Staff Salary";
   if (path.startsWith("/head-office/salary")) return "Head Office Salary";
   if (path.startsWith("/laundry/salary")) return "Laundry & Linen Salary";

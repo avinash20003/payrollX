@@ -22,10 +22,10 @@ export const departments: Department[] = [
     kind: "regular",
   },
   {
-    slug: "housekeeping",
-    name: "Housekeeping",
-    menuLabel: "Housekeeping",
-    employeeDepartment: "Housekeeping",
+    slug: "payrollx",
+    name: "PayrollX",
+    menuLabel: "PayrollX",
+    employeeDepartment: "PayrollX",
     kind: "regular",
   },
   {

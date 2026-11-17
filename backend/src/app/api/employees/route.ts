@@ -5,7 +5,7 @@ import { pool } from "@/lib/db";
 const ALLOWED_DEPARTMENTS = [
   "Voucher & ID Staff",
   "Head Office",
-  "Housekeeping",
+  "PayrollX",
   "Laundry & Linen",
   "Patient Movement Services",
 ] as const;

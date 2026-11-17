@@ -38,7 +38,7 @@ const workspace: Nav[] = [
 const departments: Nav[] = [
   { name: "Voucher & ID Staff", href: "/id-staff", icon: IdCard },
   { name: "Head Office", href: "/head-office", icon: Building2 },
-  { name: "Housekeeping", href: "/housekeeping", icon: Users },
+  { name: "PayrollX", href: "/payrollx", icon: Users },
   { name: "Laundry & Linen", href: "/laundry", icon: Shirt },
   {
     name: "Patient Movement Services",

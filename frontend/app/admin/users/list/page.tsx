@@ -40,7 +40,7 @@ type ManagedUser = {
 const departments = [
   "Voucher & ID Staff",
   "Head Office",
-  "Housekeeping",
+  "PayrollX",
   "Laundry & Linen",
   "Patient Movement Services",
 ];

@@ -92,7 +92,7 @@ for migration in /migrations/*.sql; do
   fi
 
   echo "Applying migration: $version"
-  temp_file="/tmp/housekeeping-migration-$$.sql"
+  temp_file="/tmp/payrollx-migration-$$.sql"
   trap 'rm -f "$temp_file"' EXIT HUP INT TERM
   {
     printf '%s\n' 'SELECT pg_advisory_xact_lock(732915480122);'

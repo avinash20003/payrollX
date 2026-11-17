@@ -1,4 +1,4 @@
-# Housekeeping Salary
+# PayrollX Salary
 
 The repository is split into independently built services:
 

@@ -1,12 +1,12 @@
-name: housekeeping-salary
+name: payrollx-salary
 
 services:
   db:
     image: postgres:18.7-alpine3.24
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-housekeeping_salary}
-      POSTGRES_USER: ${POSTGRES_USER:-housekeeping}
+      POSTGRES_DB: ${POSTGRES_DB:-payrollx_salary}
+      POSTGRES_USER: ${POSTGRES_USER:-payrollx}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}
     volumes:
       - postgres_data:/var/lib/postgresql
@@ -25,10 +25,10 @@ services:
     environment:
       PGHOST: db
       PGPORT: 5432
-      PGDATABASE: ${POSTGRES_DB:-housekeeping_salary}
-      PGUSER: ${MIGRATOR_DB_USER:-housekeeping_migrator}
+      PGDATABASE: ${POSTGRES_DB:-payrollx_salary}
+      PGUSER: ${MIGRATOR_DB_USER:-payrollx_migrator}
       PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?Set MIGRATOR_DB_PASSWORD in deployment/.env}
-      APP_DB_USER: ${APP_DB_USER:-housekeeping_app}
+      APP_DB_USER: ${APP_DB_USER:-payrollx_app}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}
       BOOTSTRAP_PGUSER: ${POSTGRES_USER:-postgres}
       BOOTSTRAP_PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}
@@ -40,12 +40,12 @@ services:
         condition: service_healthy
 
   admin-create:
-    image: ${BACKEND_IMAGE:-housekeeping-salary-backend:local}
+    image: ${BACKEND_IMAGE:-payrollx-salary-backend:local}
     restart: "no"
     command: ["node", "scripts/create-admin.mjs"]
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${APP_DB_USER:-housekeeping_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-housekeeping_salary}
+      DATABASE_URL: postgresql://${APP_DB_USER:-payrollx_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-payrollx_salary}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME in deployment/.env}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in deployment/.env}
     depends_on:
@@ -56,13 +56,13 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    image: ${BACKEND_IMAGE:-housekeeping-salary-backend:local}
+    image: ${BACKEND_IMAGE:-payrollx-salary-backend:local}
     restart: unless-stopped
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3001
-      DATABASE_URL: postgresql://${APP_DB_USER:-housekeeping_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-housekeeping_salary}
+      DATABASE_URL: postgresql://${APP_DB_USER:-payrollx_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-payrollx_salary}
     expose:
       - "3001"
     depends_on:
@@ -81,7 +81,7 @@ services:
       dockerfile: Dockerfile
       args:
         API_INTERNAL_URL: http://backend:3001
-    image: ${FRONTEND_IMAGE:-housekeeping-salary-frontend:local}
+    image: ${FRONTEND_IMAGE:-payrollx-salary-frontend:local}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -104,7 +104,7 @@ services:
     build:
       context: ../nginx
       dockerfile: Dockerfile
-    image: ${NGINX_IMAGE:-housekeeping-salary-nginx:local}
+    image: ${NGINX_IMAGE:-payrollx-salary-nginx:local}
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-8080}:80"

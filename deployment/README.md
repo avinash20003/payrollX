@@ -27,7 +27,7 @@ It builds (or pulls) the application images, stops the current request path, rem
 5. The frontend becomes healthy.
 6. Nginx starts and publishes the site at `http://localhost:8080` (change with `HTTP_PORT`).
 
-For a release using published images, set `FRONTEND_IMAGE`, `BACKEND_IMAGE`, and `NGINX_IMAGE` in the deployment environment and run:
+For a release using published images, set `FRONTEND_IMAGE`, `BACKEND_IMAGE`, and `NGINX_IMAGE` in the deployment environment to published, immutable version tags (or digests), then run:
 
 ```sh
 sh deployment/deploy.sh production

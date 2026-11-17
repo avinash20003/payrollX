@@ -23,7 +23,7 @@ import {
 const DEPARTMENTS = [
   "Voucher & ID Staff",
   "Head Office",
-  "Housekeeping",
+  "PayrollX",
   "Laundry & Linen",
   "Patient Movement Services",
 ];

@@ -1,12 +1,12 @@
-name: housekeeping-salary
+name: payrollx
 
 services:
   db:
     image: postgres:18.7-alpine3.24
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-housekeeping_salary}
-      POSTGRES_USER: ${POSTGRES_USER:-housekeeping}
+      POSTGRES_DB: ${POSTGRES_DB:-payrollx_salary}
+      POSTGRES_USER: ${POSTGRES_USER:-payrollx_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql
@@ -24,10 +24,10 @@ services:
     environment:
       PGHOST: db
       PGPORT: 5432
-      PGDATABASE: ${POSTGRES_DB:-housekeeping_salary}
-      PGUSER: ${MIGRATOR_DB_USER:-housekeeping_migrator}
+      PGDATABASE: ${POSTGRES_DB:-payrollx_salary}
+      PGUSER: ${MIGRATOR_DB_USER:-payrollx_migrator}
       PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?Set MIGRATOR_DB_PASSWORD}
-      APP_DB_USER: ${APP_DB_USER:-housekeeping_app}
+      APP_DB_USER: ${APP_DB_USER:-payrollx_app}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}
       BOOTSTRAP_PGUSER: ${POSTGRES_USER:-postgres}
       BOOTSTRAP_PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
@@ -44,7 +44,7 @@ services:
     command: ["node", "scripts/create-admin.mjs"]
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${APP_DB_USER:-housekeeping_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-housekeeping_salary}
+      DATABASE_URL: postgresql://${APP_DB_USER:-payrollx_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-payrollx_salary}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
     depends_on:
@@ -58,7 +58,7 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3001
-      DATABASE_URL: postgresql://${APP_DB_USER:-housekeeping_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-housekeeping_salary}
+      DATABASE_URL: postgresql://${APP_DB_USER:-payrollx_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-payrollx_salary}
     expose: ["3001"]
     depends_on:
       admin-create:

@@ -21,7 +21,7 @@ import {
 const departments = [
   "Voucher & ID Staff",
   "Head Office",
-  "Housekeeping",
+  "PayrollX",
   "Laundry & Linen",
   "Patient Movement Services",
 ];
@@ -156,7 +156,7 @@ export default function CreateDepartmentUserPage() {
                     type="text"
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
-                    placeholder="e.g. housekeeping_user"
+                    placeholder="e.g. payrollx_user"
                     autoComplete="off"
                     maxLength={100}
                     pattern="[a-zA-Z0-9._-]+"

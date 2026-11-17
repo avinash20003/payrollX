@@ -70,7 +70,7 @@ type Theme = "light" | "dark";
 const DEPARTMENTS = [
   { name: "Voucher & ID Staff", route: "/id-staff", icon: Users, desc: "Voucher and identity staff", keys: ["idstaff", "voucheridstaff", "voucherandidstaff"], color: "#3b82f6" },
   { name: "Head Office", route: "/head-office", icon: Building2, desc: "Administrative operations", keys: ["headoffice"], color: "#22d3ee" },
-  { name: "Housekeeping", route: "/housekeeping", icon: Sparkles, desc: "Housekeeping operations", keys: ["housekeeping"], color: "#8b5cf6" },
+  { name: "PayrollX", route: "/payrollx", icon: Sparkles, desc: "PayrollX operations", keys: ["payrollx"], color: "#8b5cf6" },
   { name: "Laundry & Linen", route: "/laundry", icon: Activity, desc: "Laundry and linen services", keys: ["laundrylinen", "laundryandlinen"], color: "#f59e0b" },
   { name: "Patient Movement Services", route: "/patient-movement", icon: Users, desc: "Patient movement operations", keys: ["patientmovementservices"], color: "#10b981" },
 ];

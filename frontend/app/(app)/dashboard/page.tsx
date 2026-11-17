@@ -69,7 +69,7 @@ type Row = {
 const DEPARTMENTS = [
   { name: "Voucher & ID Staff", route: "/id-staff", icon: Users, desc: "Voucher and identity staff", keys: ["idstaff", "voucheridstaff", "voucherandidstaff", "voucherid"], color: "#3b82f6" },
   { name: "Head Office", route: "/head-office", icon: Building2, desc: "Administrative operations", keys: ["headoffice", "ho"], color: "#22d3ee" },
-  { name: "Housekeeping", route: "/housekeeping", icon: Sparkles, desc: "Housekeeping operations", keys: ["housekeeping", "hk"], color: "#8b5cf6" },
+  { name: "PayrollX", route: "/payrollx", icon: Sparkles, desc: "PayrollX operations", keys: ["payrollx", "housekeeping", "hk"], color: "#8b5cf6" },
   { name: "Laundry & Linen", route: "/laundry", icon: Activity, desc: "Laundry and linen services", keys: ["laundrylinen", "laundryandlinen", "laundry"], color: "#f59e0b" },
   { name: "Patient Movement Services", route: "/patient-movement", icon: Users, desc: "Patient movement operations", keys: ["patientmovementservices", "patientmovement", "pms"], color: "#10b981" },
 ];
@@ -83,7 +83,7 @@ const PENDING_PAGE = 60;
 const normalize = (v?: string | null) => (v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
 // Exact key match first, then a forgiving partial match
-// (e.g. "Laundry", "Patient Movement", "Housekeeping Dept").
+// (e.g. "Laundry", "Patient Movement", "PayrollX Dept").
 function deptIndex(value?: string | null) {
   const key = normalize(value);
   if (!key) return -1;

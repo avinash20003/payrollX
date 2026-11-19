@@ -1,0 +1,12 @@
+**/node_modules
+**/.next
+**/out
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+deployment/backups
+*.dump
+*.sql.gz
+*.tsbuildinfo
+coverage

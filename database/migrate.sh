@@ -23,6 +23,11 @@ bootstrap_psql() {
     -h "$PGHOST" -p "$PGPORT" -U "$BOOTSTRAP_PGUSER" -d "$PGDATABASE" "$@"
 }
 
+if ! bootstrap_psql -c 'SELECT 1' >/dev/null 2>&1; then
+  echo "Cannot authenticate with bootstrap database role '$BOOTSTRAP_PGUSER'. An existing PostgreSQL volume keeps the role and password from its original initialization; set POSTGRES_USER and POSTGRES_PASSWORD to those original credentials. The database volume was not changed." >&2
+  exit 1
+fi
+
 # The migration role owns DDL; the app role receives only runtime DML permissions.
 bootstrap_psql \
   -v migration_user="$PGUSER" -v migration_password="$PGPASSWORD" \
@@ -96,8 +101,8 @@ for migration in /migrations/*.sql; do
   trap 'rm -f "$temp_file"' EXIT HUP INT TERM
   {
     printf '%s\n' 'SELECT pg_advisory_xact_lock(732915480122);'
-    printf "SELECT checksum = '%s' AS migration_current FROM public.schema_migrations WHERE version = '%s' \\gset\n" "$checksum" "$version"
-    printf '%s\n' '\if :{?migration_current}'
+    printf "SELECT EXISTS (SELECT 1 FROM public.schema_migrations WHERE version = '%s') AS migration_exists, COALESCE((SELECT checksum = '%s' FROM public.schema_migrations WHERE version = '%s'), false) AS migration_current \\gset\n" "$version" "$checksum" "$version"
+    printf '%s\n' '\if :migration_exists'
     printf '%s\n' '\if :migration_current'
     printf '%s\n' "\\echo Already applied: $version"
     printf '%s\n' '\else'

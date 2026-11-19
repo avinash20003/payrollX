@@ -23,6 +23,11 @@ export default function AppShell({
 
   const [mobile, setMobile] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [authStatus, setAuthStatus] = useState<
+    "checking" | "authenticated" | "unauthenticated" | "error"
+  >("checking");
+  const [authError, setAuthError] = useState("");
+  const [authAttempt, setAuthAttempt] = useState(0);
 
   // Load authentication and theme.
   useEffect(() => {
@@ -44,22 +49,41 @@ export default function AppShell({
           credentials: "include",
         });
 
-        if (!response.ok) {
-          if (active) router.replace("/login");
+        if (response.status === 401) {
+          if (active) {
+            setAuthStatus("unauthenticated");
+            router.replace("/login");
+          }
           return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Authentication service returned ${response.status}.`);
         }
 
         const data = await response.json();
 
-        const currentUser =
-          data?.user ?? data?.data?.user ?? data;
+        const currentUser = data?.user;
 
         if (!currentUser || !currentUser.role) {
-          if (active) router.replace("/login");
+          if (active) {
+            setAuthStatus("unauthenticated");
+            router.replace("/login");
+          }
           return;
         }
+
+        if (active) {
+          setAuthError("");
+          setAuthStatus("authenticated");
+        }
       } catch {
-        if (active) router.replace("/login");
+        if (active) {
+          setAuthError(
+            "We could not verify your session. Check the connection and retry."
+          );
+          setAuthStatus("error");
+        }
       }
     }
 
@@ -68,7 +92,35 @@ export default function AppShell({
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, authAttempt]);
+
+  if (authStatus !== "authenticated") {
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-slate-950 p-6 text-slate-100">
+        <section className="max-w-md text-center" aria-live="polite">
+          {authStatus === "checking" ? (
+            <p>Checking your session…</p>
+          ) : authStatus === "error" ? (
+            <>
+              <p role="alert">{authError}</p>
+              <button
+                type="button"
+                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white"
+                onClick={() => {
+                  setAuthStatus("checking");
+                  setAuthAttempt((attempt) => attempt + 1);
+                }}
+              >
+                Retry
+              </button>
+            </>
+          ) : (
+            <p>Redirecting to login…</p>
+          )}
+        </section>
+      </main>
+    );
+  }
 
   // Theme switching.
   const toggleTheme = () => {

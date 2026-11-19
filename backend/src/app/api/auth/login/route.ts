@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes, createHash } from "node:crypto";
 import argon2 from "argon2";
 import { pool } from "@/lib/db";
+import { shouldUseSecureSessionCookie } from "@/lib/session-cookie";
 
 const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set("payrollx_session", sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: shouldUseSecureSessionCookie(request),
       sameSite: "lax",
       path: "/",
       expires: expiresAt,

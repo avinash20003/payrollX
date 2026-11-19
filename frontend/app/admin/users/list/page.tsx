@@ -27,6 +27,7 @@ import {
   EyeOff,
   X,
 } from "lucide-react";
+import { departmentDisplayName } from "@/lib/departments";
 
 type ManagedUser = {
   id: number;
@@ -40,7 +41,7 @@ type ManagedUser = {
 const departments = [
   "Voucher & ID Staff",
   "Head Office",
-  "PayrollX",
+  "Housekeeping",
   "Laundry & Linen",
   "Patient Movement Services",
 ];
@@ -107,14 +108,14 @@ export default function UserManagementPage() {
       const matchesSearch =
         !query ||
         user.username.toLowerCase().includes(query) ||
-        (user.department || "").toLowerCase().includes(query) ||
+        departmentDisplayName(user.department).toLowerCase().includes(query) ||
         user.role.toLowerCase().includes(query);
 
       const matchesDepartment =
         departmentFilter === "ALL" ||
         (departmentFilter === "__UNASSIGNED__"
           ? !user.department
-          : user.department === departmentFilter);
+          : departmentDisplayName(user.department) === departmentFilter);
 
       const matchesStatus =
         statusFilter === "ALL" ||
@@ -594,7 +595,9 @@ export default function UserManagementPage() {
                               size={14}
                               className="shrink-0 text-[var(--shell-muted)]"
                             />
-                            <span>{user.department || "Unassigned"}</span>
+                            <span>
+                              {departmentDisplayName(user.department) || "Unassigned"}
+                            </span>
                           </div>
                         </td>
 

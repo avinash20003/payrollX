@@ -23,9 +23,9 @@ export const departments: Department[] = [
   },
   {
     slug: "payrollx",
-    name: "PayrollX",
-    menuLabel: "PayrollX",
-    employeeDepartment: "PayrollX",
+    name: "Housekeeping",
+    menuLabel: "Housekeeping",
+    employeeDepartment: "Housekeeping",
     kind: "regular",
   },
   {
@@ -46,4 +46,18 @@ export const departments: Department[] = [
 
 export function getDepartment(slug: string): Department | undefined {
   return departments.find((d) => d.slug === slug);
+}
+
+/** Normalize the former department label while preserving its existing route. */
+export function departmentDisplayName(value: string | null | undefined): string {
+  const normalized = (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  return normalized.startsWith("payrollx") ||
+    normalized === "housekeeping" ||
+    normalized === "hk"
+    ? "Housekeeping"
+    : value ?? "";
 }

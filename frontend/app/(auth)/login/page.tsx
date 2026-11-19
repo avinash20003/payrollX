@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   User,
   Lock,
@@ -43,8 +42,6 @@ function PayrollXMark() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -90,15 +87,16 @@ export default function LoginPage() {
 
       setPassword("");
 
-      router.replace(
+      const redirectTo =
         typeof data.redirectTo === "string" &&
-          data.redirectTo.startsWith("/") &&
-          !data.redirectTo.startsWith("//")
+        data.redirectTo.startsWith("/") &&
+        !data.redirectTo.startsWith("//")
           ? data.redirectTo
-          : "/dashboard"
-      );
+          : "/dashboard";
 
-      router.refresh();
+      // A document navigation forces the protected server layout to validate
+      // the newly-set cookie instead of reusing a prefetched unauthenticated RSC.
+      window.location.assign(redirectTo);
     } catch {
       setMessageType("error");
       setMessage(

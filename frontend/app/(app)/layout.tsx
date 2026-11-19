@@ -3,18 +3,31 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import AuthUnavailable from "@/components/layout/AuthUnavailable";
 import { getAuthenticatedUser } from "@/lib/auth";
 
-// The login check runs on its own, inside Suspense, and renders nothing.
-// It no longer wraps {children}, so the page is always part of the layout.
-async function AuthGuard() {
-  const user = await getAuthenticatedUser();
-
-  if (!user) {
-    redirect("/login");
+async function AuthenticatedAppLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  let user;
+  try {
+    user = await getAuthenticatedUser();
+  } catch {
+    return <AuthUnavailable retryPath="/dashboard" />;
   }
 
-  return null;
+  if (!user) redirect("/login");
+
+  return (
+    <AppShell>
+      {/* Also covers pages that use useSearchParams() */}
+      <Suspense fallback={<div className="p-6 text-sm">Loading...</div>}>
+        {children}
+      </Suspense>
+    </AppShell>
+  );
 }
 
 export default function ProtectedAppLayout({
@@ -23,17 +36,14 @@ export default function ProtectedAppLayout({
   children: ReactNode;
 }) {
   return (
-    <>
-      <Suspense fallback={null}>
-        <AuthGuard />
-      </Suspense>
-
-      <AppShell>
-        {/* Also covers pages that use useSearchParams() */}
-        <Suspense fallback={<div className="p-6 text-sm">Loading...</div>}>
-          {children}
-        </Suspense>
-      </AppShell>
-    </>
+    <Suspense
+      fallback={
+        <main className="flex min-h-dvh items-center justify-center bg-slate-950 p-6 text-slate-100">
+          Checking your session…
+        </main>
+      }
+    >
+      <AuthenticatedAppLayout>{children}</AuthenticatedAppLayout>
+    </Suspense>
   );
 }

@@ -1,11 +1,14 @@
-# PayrollX Salary
+# PAYROLLX Salary
 
-The repository is split into independently built services:
+PAYROLLX runs as two Docker services:
 
-- [`frontend/`](frontend/README.md): Next.js user interface.
-- [`backend/`](backend/README.md): Next.js API and PostgreSQL access.
-- [`database/`](database/README.md): PostgreSQL schema and versioned migrations.
-- [`nginx/`](nginx/nginx.conf): public reverse proxy.
-- [`deployment/`](deployment/README.md): deployment configuration and startup flow.
+- `app`: combined Next.js frontend, backend API, backend-integrated frontend proxy, migrations, and administrator initialization.
+- `db`: PostgreSQL 18 Alpine with persistent host-independent Docker volume storage.
 
-Run `sh deployment/deploy.sh local` after setting `deployment/.env`. Startup is gated in order: PostgreSQL health, schema migration, initial administrator, backend health, frontend health, and Nginx. Only Nginx publishes a host port.
+Configure `deployment/.env` from `deployment/.env.example`, choose the existing database volume with `POSTGRES_VOLUME_NAME`, then run:
+
+```sh
+sh deployment/deploy.sh
+```
+
+The app is available at `http://SERVER_INTERNAL_IP:8080` by default. PostgreSQL is internal to the Docker network. See [deployment/README.md](deployment/README.md) for volume safety, backups, restore, and cron instructions.

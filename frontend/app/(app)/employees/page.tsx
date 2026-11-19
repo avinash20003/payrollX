@@ -19,11 +19,12 @@ import {
   Building2,
   Power,
 } from "lucide-react";
+import { departmentDisplayName } from "@/lib/departments";
 
 const DEPARTMENTS = [
   "Voucher & ID Staff",
   "Head Office",
-  "PayrollX",
+  "Housekeeping",
   "Laundry & Linen",
   "Patient Movement Services",
 ];
@@ -144,11 +145,11 @@ export default function EmployeesPage() {
         !query ||
         employee.employee_code.toLowerCase().includes(query) ||
         employee.employee_name.toLowerCase().includes(query) ||
-        employee.department.toLowerCase().includes(query);
+        departmentDisplayName(employee.department).toLowerCase().includes(query);
 
       const matchesDepartment =
         departmentFilter === "ALL" ||
-        employee.department === departmentFilter;
+        departmentDisplayName(employee.department) === departmentFilter;
 
       const matchesStatus =
         statusFilter === "ALL" ||
@@ -173,7 +174,7 @@ export default function EmployeesPage() {
     setForm({
       employee_code: employee.employee_code,
       employee_name: employee.employee_name,
-      department: employee.department,
+      department: departmentDisplayName(employee.department),
       date_of_joining: employee.date_of_joining
         ? employee.date_of_joining.slice(0, 10)
         : "",
@@ -573,7 +574,7 @@ export default function EmployeesPage() {
                       </td>
 
                       <td className="px-5 py-4 text-[var(--shell-text)]">
-                        {employee.department}
+                        {departmentDisplayName(employee.department)}
                       </td>
 
                       <td className="px-5 py-4 text-[var(--shell-text)]">

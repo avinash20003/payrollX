@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { pool } from "@/lib/db";
+import { shouldUseSecureSessionCookie } from "@/lib/session-cookie";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set("payrollx_session", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: shouldUseSecureSessionCookie(request),
       sameSite: "lax",
       path: "/",
       expires: new Date(0),

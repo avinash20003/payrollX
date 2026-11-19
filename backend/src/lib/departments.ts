@@ -23,9 +23,9 @@ export const departments: Department[] = [
   },
   {
     slug: "payrollx",
-    name: "PayrollX",
-    menuLabel: "PayrollX",
-    employeeDepartment: "PayrollX",
+    name: "Housekeeping",
+    menuLabel: "Housekeeping",
+    employeeDepartment: "Housekeeping",
     kind: "regular",
   },
   {

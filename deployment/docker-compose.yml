@@ -1,116 +1,79 @@
-name: payrollx-salary
+name: payrollx
 
 services:
-  db:
-    image: postgres:18.7-alpine3.24
+  app:
+    container_name: payrollx-app
+    image: payrollx-app:local
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-payrollx_salary}
-      POSTGRES_USER: ${POSTGRES_USER:-payrollx}
+      NODE_ENV: production
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-false}
+      HOSTNAME: 0.0.0.0
+      PORT: 8080
+      FRONTEND_PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB in deployment/.env}
+      PGUSER: ${MIGRATOR_DB_USER:?Set MIGRATOR_DB_USER in deployment/.env}
+      PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?Set MIGRATOR_DB_PASSWORD in deployment/.env}
+      APP_DB_USER: ${APP_DB_USER:?Set APP_DB_USER in deployment/.env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}
+      BOOTSTRAP_PGUSER: ${POSTGRES_USER:?Set POSTGRES_USER in deployment/.env}
+      BOOTSTRAP_PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}
+      DATABASE_URL: postgresql://${APP_DB_USER:?Set APP_DB_USER in deployment/.env}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in deployment/.env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME in deployment/.env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in deployment/.env}
+    ports:
+      - "${HTTP_BIND_ADDRESS:-0.0.0.0}:${HTTP_PORT:-8080}:8080"
+    networks:
+      - payrollx-internal
+      - payrollx-edge
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          Promise.all([
+            fetch('http://127.0.0.1:8080/api/health'),
+            fetch('http://127.0.0.1:8080/login')
+          ]).then((responses) => process.exit(responses.every((response) => response.ok) ? 0 : 1)).catch(() => process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  db:
+    container_name: payrollx-db
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in deployment/.env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in deployment/.env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}
     volumes:
-      - postgres_data:/var/lib/postgresql
-    expose:
-      - "5432"
+      - payrollx_postgres_data:/var/lib/postgresql
+    networks:
+      - payrollx-internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 12
+      start_period: 10s
 
-  migrate:
-    image: postgres:18.7-alpine3.24
-    restart: "no"
-    entrypoint: ["/bin/sh", "/database/migrate.sh"]
-    environment:
-      PGHOST: db
-      PGPORT: 5432
-      PGDATABASE: ${POSTGRES_DB:-payrollx_salary}
-      PGUSER: ${MIGRATOR_DB_USER:-payrollx_migrator}
-      PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?Set MIGRATOR_DB_PASSWORD in deployment/.env}
-      APP_DB_USER: ${APP_DB_USER:-payrollx_app}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}
-      BOOTSTRAP_PGUSER: ${POSTGRES_USER:-postgres}
-      BOOTSTRAP_PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}
-    volumes:
-      - ../database/migrate.sh:/database/migrate.sh:ro
-      - ../database/migrations:/migrations:ro
-    depends_on:
-      db:
-        condition: service_healthy
-
-  admin-create:
-    image: ${BACKEND_IMAGE:-payrollx-salary-backend:local}
-    restart: "no"
-    command: ["node", "scripts/create-admin.mjs"]
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://${APP_DB_USER:-payrollx_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-payrollx_salary}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME in deployment/.env}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in deployment/.env}
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-
-  backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
-    image: ${BACKEND_IMAGE:-payrollx-salary-backend:local}
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      HOSTNAME: 0.0.0.0
-      PORT: 3001
-      DATABASE_URL: postgresql://${APP_DB_USER:-payrollx_app}:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-payrollx_salary}
-    expose:
-      - "3001"
-    depends_on:
-      admin-create:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-
-  frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-      args:
-        API_INTERNAL_URL: http://backend:3001
-    image: ${FRONTEND_IMAGE:-payrollx-salary-frontend:local}
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      HOSTNAME: 0.0.0.0
-      PORT: 3000
-      API_INTERNAL_URL: http://backend:3001
-    expose:
-      - "3000"
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-
-  nginx:
-    build:
-      context: ../nginx
-      dockerfile: Dockerfile
-    image: ${NGINX_IMAGE:-payrollx-salary-nginx:local}
-    restart: unless-stopped
-    ports:
-      - "${HTTP_PORT:-8080}:80"
-    depends_on:
-      frontend:
-        condition: service_healthy
+networks:
+  payrollx-internal:
+    internal: true
+  payrollx-edge: {}
 
 volumes:
-  postgres_data:
+  payrollx_postgres_data:
+    external: true
+    name: ${POSTGRES_VOLUME_NAME:-payrollx_postgres_data}

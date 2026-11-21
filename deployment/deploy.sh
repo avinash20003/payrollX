@@ -64,7 +64,7 @@ done
 
 compose config --quiet || fail "Compose configuration is invalid."
 log_message "Building the combined application image."
-compose build app
+compose build --no-cache app
 
 log_message "Starting PostgreSQL without stopping any currently running database container."
 compose up --detach db

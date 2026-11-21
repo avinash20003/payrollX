@@ -5,8 +5,9 @@
 **/.env
 **/.env.*
 !**/.env.example
-deployment/backups
+deployment/backups/**
 *.dump
 *.sql.gz
 *.tsbuildinfo
 coverage
+.DS_Store

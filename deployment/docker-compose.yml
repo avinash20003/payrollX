@@ -7,6 +7,7 @@ services:
     build:
       context: ..
       dockerfile: deployment/Dockerfile
+      no_cache: true
     restart: unless-stopped
     environment:
       NODE_ENV: production

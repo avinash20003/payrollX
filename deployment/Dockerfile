@@ -4,11 +4,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
     && rm -rf /var/lib/apt/lists/*
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci
+RUN node -e "if (require('next/package.json').version !== '16.4.6') process.exit(1)"
 
 FROM node:22-bookworm-slim AS frontend-deps
 WORKDIR /workspace/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
+RUN node -e "if (require('next/package.json').version !== '16.4.6') process.exit(1)"
 
 FROM node:22-bookworm-slim AS backend-build
 WORKDIR /workspace/backend

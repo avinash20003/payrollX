@@ -1428,9 +1428,9 @@ export function SalarySheet({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="salary-sheet-scroll max-h-[min(58vh,680px)] overflow-auto">
           <table className="w-full min-w-[2450px] text-left text-xs">
-            <thead className="bg-[var(--shell-hover)] text-[var(--shell-muted)]">
+            <thead className="sticky top-0 z-20 bg-[var(--shell-hover)] text-[var(--shell-muted)] shadow-sm">
               <tr>
                 {headers.map((header) => (
                   <th
@@ -1474,12 +1474,12 @@ export function SalarySheet({
                     >
                       <td className="px-3 py-3 text-[var(--shell-muted)]">{index + 1}</td>
 
-                      <td className="px-3 py-3 font-semibold text-[var(--shell-accent)]">
+                      <td className="sticky left-0 z-10 bg-[var(--shell-surface)] px-3 py-3 font-semibold text-[var(--shell-accent)]">
                         {row.employee.employee_code}
                       </td>
 
                       <td className="px-3 py-3">
-                        <p className="font-semibold">{row.employee.employee_name}</p>
+                        <p className="sticky left-0 z-10 bg-[var(--shell-surface)] font-semibold">{row.employee.employee_name}</p>
                       </td>
 
                       <td className="px-3 py-3 tabular-nums">

@@ -213,7 +213,7 @@ export default function AppShell({
         </div>
 
         {/* MAIN PAGE CONTENT - ALL AUTHENTICATED USERS */}
-        <main className="hide-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto bg-[var(--shell-bg)] p-4 sm:p-6 lg:p-8">
+        <main className="app-main-scroll min-h-0 min-w-0 flex-1 overflow-y-auto bg-[var(--shell-bg)] p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

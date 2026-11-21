@@ -18,8 +18,10 @@ import {
   IndianRupee,
   Building2,
   Power,
+  FileSpreadsheet,
 } from "lucide-react";
 import { departmentDisplayName } from "@/lib/departments";
+import * as XLSX from "xlsx";
 
 const DEPARTMENTS = [
   "Voucher & ID Staff",
@@ -89,6 +91,14 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [pageSize, setPageSize] = useState(50);
+  const [page, setPage] = useState(1);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importRows, setImportRows] = useState<Record<string, unknown>[]>([]);
+  const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  const [importMapping, setImportMapping] = useState<Record<string,string>>({});
+  const [importStatus, setImportStatus] = useState("");
+  const [importResults, setImportResults] = useState<{row:number;employee_code:string;success:boolean;message?:string}[]>([]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -160,12 +170,73 @@ export default function EmployeesPage() {
     });
   }, [employees, search, departmentFilter, statusFilter]);
 
+  const pageCount = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pagedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, departmentFilter, statusFilter, pageSize]);
+
   function openCreateForm() {
     setEditingEmployee(null);
     setForm(EMPTY_FORM);
     setMessage("");
     setError("");
     setFormOpen(true);
+  }
+
+  async function readImportFile(file: File) {
+    setImportResults([]);
+    if (!/\.xlsx?$/i.test(file.name)) { setImportStatus("Select an .xlsx or .xls file."); return; }
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), {type:"array", cellDates:true});
+      if (!workbook.SheetNames.length) { setImportStatus("The workbook has no sheets."); return; }
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet,{header:1,defval:""});
+      const headers = (matrix[0] || []).map((value,index)=>String(value || `Column ${index+1}`).trim());
+      const rows = XLSX.utils.sheet_to_json<Record<string,unknown>>(sheet,{defval:""});
+      if (rows.length > 1000) { setImportStatus("Import is limited to 1,000 records per workbook. Split this workbook and retry."); return; }
+      const aliases:Record<string,string[]>={employee_code:["employeecode","employeeno","employeeid","code"],employee_name:["employeename","name"],department:["department","dept"],date_of_joining:["dateofjoining","joiningdate","doj"],basic_salary:["basicsalary","salary"],ot_rate:["otrate","overtimerate"],night_rate:["nightrate","nightdutyrate"]};
+      const mapping:Record<string,string>={};
+      for (const [field,names] of Object.entries(aliases)) mapping[field]=headers.find(h=>names.includes(h.toLowerCase().replace(/[^a-z]/g,""))) || "";
+      setImportHeaders(headers); setImportRows(rows); setImportMapping(mapping); setImportStatus(`${file.name} · ${rows.length} records`);
+    } catch { setImportStatus("Could not read this workbook."); }
+  }
+
+  async function commitImport() {
+    const records = importRows.map((row) => {
+      const get = (field:string) => importMapping[field] ? row[importMapping[field]] : "";
+      const rawDate = get("date_of_joining");
+      let date = "";
+      if (rawDate instanceof Date && !Number.isNaN(rawDate.getTime())) date = rawDate.toISOString().slice(0,10);
+      else if (typeof rawDate === "number" && rawDate > 0) {
+        const parsed = XLSX.SSF.parse_date_code(rawDate);
+        if (parsed) date = `${parsed.y}-${String(parsed.m).padStart(2,"0")}-${String(parsed.d).padStart(2,"0")}`;
+      } else if (typeof rawDate === "string") date = rawDate.trim();
+      return {employee_code:String(get("employee_code") ?? "").trim(), employee_name:String(get("employee_name") ?? "").trim(), department:String(get("department") ?? "").trim(), date_of_joining:date, basic_salary:get("basic_salary"), ot_rate:get("ot_rate"), night_rate:get("night_rate")};
+    });
+    try {
+      const response=await fetch("/api/employees/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({employees:records})});
+      const data=await response.json();
+      if(!response.ok||!data.success){setImportStatus(data.message||"Import failed.");return;}
+      setImportResults(data.results || []);
+      setImportStatus(`${data.imported} imported · ${data.failed} failed. Failed rows are listed below.`);
+      if (data.imported) await loadEmployees(true);
+    } catch { setImportStatus("Import request failed. Check the connection and retry."); }
+  }
+
+  function downloadImportFailures() {
+    const failures = importResults.filter((result) => !result.success);
+    const csv = ["Row,Employee Code,Error", ...failures.map((result) => [result.row, result.employee_code, result.message || "Import failed"].map((value) => `"${String(value).replaceAll('"','""')}"`).join(","))].join("\r\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob(["\uFEFF", csv], {type:"text/csv;charset=utf-8"}));
+    link.download = "payrollx-employee-import-failures.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
   }
 
   function openEditForm(employee: Employee) {
@@ -350,6 +421,7 @@ export default function EmployeesPage() {
               Refresh
             </button>
 
+            <button type="button" onClick={() => setImportOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--shell-border)] bg-[var(--shell-surface)] px-4 py-3 text-sm font-semibold text-[var(--shell-text)] hover:bg-[var(--shell-hover)]"><FileSpreadsheet size={17}/>Import Employees</button>
             <button
               type="button"
               onClick={openCreateForm}
@@ -532,9 +604,9 @@ export default function EmployeesPage() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="employee-table-scroll max-h-[min(58vh,680px)] overflow-auto">
               <table className="w-full min-w-[1050px] text-left text-sm">
-                <thead className="border-b border-[var(--shell-border)] bg-[var(--shell-hover)] text-xs uppercase tracking-wider text-[var(--shell-muted)]">
+                <thead className="sticky top-0 z-10 border-b border-[var(--shell-border)] bg-[var(--shell-hover)] text-xs uppercase tracking-wider text-[var(--shell-muted)] shadow-sm">
                   <tr>
                     <th className="px-5 py-4 font-medium">Employee</th>
                     <th className="px-5 py-4 font-medium">Department</th>
@@ -548,7 +620,7 @@ export default function EmployeesPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[var(--shell-border)]">
-                  {filteredEmployees.map((employee) => (
+                  {pagedEmployees.map((employee) => (
                     <tr
                       key={employee.id}
                       className="transition hover:bg-[var(--shell-hover)]"
@@ -662,11 +734,34 @@ export default function EmployeesPage() {
             </div>
           )}
 
-          <div className="border-t border-[var(--shell-border)] px-5 py-4 text-xs text-[var(--shell-muted)]">
-            Showing {filteredEmployees.length} of {employees.length} employees
+          <div className="flex flex-col gap-3 border-t border-[var(--shell-border)] px-5 py-4 text-xs text-[var(--shell-muted)] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <span>
+                Showing {filteredEmployees.length ? (currentPage - 1) * pageSize + 1 : 0}–{Math.min(currentPage * pageSize, filteredEmployees.length)} of {filteredEmployees.length} matching ({employees.length} total)
+              </span>
+              <label className="ml-2 flex items-center gap-2">
+                Rows
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="rounded-lg border border-[var(--shell-border)] bg-[var(--shell-field)] px-2 py-1.5 text-[var(--shell-text)]"
+                  aria-label="Rows per page"
+                >
+                  {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+                </select>
+                per page
+              </label>
+            </div>
+            <nav className="flex items-center gap-2" aria-label="Employee pages">
+              <button type="button" disabled={currentPage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-lg border border-[var(--shell-border)] px-3 py-2 text-[var(--shell-text)] hover:bg-[var(--shell-hover)]">Previous</button>
+              <div className="flex items-center gap-1" aria-label="Page numbers">{Array.from({length:pageCount},(_,i)=>i+1).filter(n=>n===1||n===pageCount||Math.abs(n-currentPage)<=2).map((n,i,arr)=><span key={n} className="contents">{i>0&&n-arr[i-1]>1&&<span className="px-1">…</span>}<button type="button" aria-current={n===currentPage?"page":undefined} onClick={()=>setPage(n)} className={`rounded-lg border px-3 py-2 ${n===currentPage?"border-blue-500 bg-blue-500/15 text-[var(--shell-accent)]":"border-[var(--shell-border)] text-[var(--shell-text)] hover:bg-[var(--shell-hover)]"}`}>{n}</button></span>)}</div>
+              <button type="button" disabled={currentPage >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))} className="rounded-lg border border-[var(--shell-border)] px-3 py-2 text-[var(--shell-text)] hover:bg-[var(--shell-hover)]">Next</button>
+            </nav>
           </div>
         </section>
       </div>
+
+      {importOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"><section className="max-h-[90vh] w-full max-w-5xl overflow-auto rounded-2xl border border-[var(--shell-border)] bg-[var(--shell-surface)] p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-bold">Import Employees</h2><button onClick={()=>setImportOpen(false)} className="rounded-lg p-2 hover:bg-[var(--shell-hover)]" aria-label="Close import">×</button></div><p className="my-3 text-sm text-[var(--shell-muted)]">Select an Excel workbook (.xlsx or .xls). Review the first ten records before importing. Existing employee codes are never overwritten.</p><label className="block cursor-pointer rounded-xl border border-dashed border-[var(--shell-border)] p-6 text-center hover:bg-[var(--shell-hover)]"><input type="file" accept=".xlsx,.xls" className="sr-only" onChange={e=>e.target.files?.[0]&&void readImportFile(e.target.files[0])}/>Choose Excel file</label>{importStatus&&<p className="my-3 text-sm" role="status">{importStatus}</p>}{importRows.length>0&&<><div className="my-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{[["employee_code","Employee Code"],["employee_name","Employee Name"],["department","Department"],["date_of_joining","Date of Joining"],["basic_salary","Basic Salary"],["ot_rate","OT Rate"],["night_rate","Night Rate"]].map(([field,label])=><label key={field} className="text-xs text-[var(--shell-muted)]">{label}<select value={importMapping[field]} onChange={e=>setImportMapping(m=>({...m,[field]:e.target.value}))} className="mt-1 w-full rounded-lg border border-[var(--shell-border)] bg-[var(--shell-field)] p-2 text-[var(--shell-text)]"><option value="">Unmapped</option>{importHeaders.map(h=><option key={h} value={h}>{h}</option>)}</select></label>)}</div><div className="employee-table-scroll max-h-64 overflow-auto"><table className="w-full text-xs"><thead className="sticky top-0 bg-[var(--shell-hover)]"><tr>{Object.keys(importMapping).map(k=><th className="p-2 text-left" key={k}>{k.replaceAll("_"," ")}</th>)}</tr></thead><tbody>{importRows.slice(0,10).map((row,i)=><tr key={i} className="border-t border-[var(--shell-border)]">{Object.values(importMapping).map((col,j)=><td className="p-2" key={j}>{col?String(row[col]??""):"Missing mapping"}</td>)}</tr>)}</tbody></table></div><p className="my-3 text-sm text-[var(--shell-muted)]">{importRows.length} records · Required: employee code, name, valid department, and positive basic salary. Optional rates must be non-negative.</p><div className="flex flex-wrap gap-3"><button onClick={()=>void commitImport()} className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500">Validate and Import</button>{importResults.some(result=>!result.success)&&<button onClick={downloadImportFailures} className="rounded-xl border border-[var(--shell-border)] px-5 py-3 text-sm font-semibold">Download failed-record report</button>}</div>{importResults.some(result=>!result.success)&&<div className="mt-4 max-h-48 overflow-auto rounded-lg border border-[var(--shell-border)]"><table className="w-full text-left text-xs"><thead className="sticky top-0 bg-[var(--shell-hover)]"><tr><th className="p-2">Row</th><th className="p-2">Employee code</th><th className="p-2">Failure</th></tr></thead><tbody>{importResults.filter(result=>!result.success).map(result=><tr key={result.row} className="border-t border-[var(--shell-border)]"><td className="p-2">{result.row}</td><td className="p-2">{result.employee_code||"—"}</td><td className="p-2">{result.message}</td></tr>)}</tbody></table></div>}</>}</section></div>}
 
       {formOpen && (
         <div
